@@ -74,5 +74,6 @@
         args="-x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg R) -P $(arg P) -Y $(arg Y)
               --urdf $(arg urdf) --model wamv"/>
+   <node name="speed_node" pkg="usv_sim" type="twist2thrust.py" output="screen"/>
 </launch>
 

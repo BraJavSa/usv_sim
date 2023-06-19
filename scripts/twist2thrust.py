@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import rospy
 import numpy as np
 from geometry_msgs.msg import Twist
@@ -11,7 +12,7 @@ class VelNode:
         self.pub_r = rospy.Publisher('/wamv/thrusters/right_thrust_cmd', Float32, queue_size=10)
         self.m_l = Float32()
         self.m_r = Float32()
-        self.rate = rospy.Rate(10)  # Frecuencia de ejecución de 10 Hz
+        self.rate = rospy.Rate(100)  # Frecuencia de ejecución de 10 Hz
 
     def normalize_value(self, x, v_min, v_max):
         x_normalized = (2 * (x - v_min)) / (v_max - v_min) - 1
@@ -19,8 +20,12 @@ class VelNode:
 
     def callback(self, data):
         # Realiza aquí las operaciones o acciones deseadas con los datos recibidos
-        matriz = np.dot(np.array([[0.5, 0.5], [0.5, -0.5]]),np.array([[2*(data.linear.x)], [0.647*(data.angular.z)]]))
-        matrizn=[self.normalize_value(float(matriz[0]), -1, 1), self.normalize_value(float(matriz[1]), -1, 1)]
+
+        DISTANCIA_ENTRE_RUEDAS=0.647*2
+        matrizn=[[0], [0]]
+        matrizn[0]=(2 * data.linear.x - data.angular.z * DISTANCIA_ENTRE_RUEDAS) / 2
+        matrizn[1]=(2 * data.linear.x + data.angular.z * DISTANCIA_ENTRE_RUEDAS) / 2
+
         self.m_l.data=matrizn[0]
         self.m_r.data=matrizn[1]
         self.pub_l.publish(self.m_l)
