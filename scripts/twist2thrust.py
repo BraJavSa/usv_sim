@@ -30,7 +30,6 @@ class VelNode:
         self.m_r.data=matrizn[1]
         self.pub_l.publish(self.m_l)
         self.pub_r.publish(self.m_r)
-        print(matrizn)
         self.rate.sleep()
 
     def run(self):
