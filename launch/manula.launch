@@ -78,5 +78,6 @@
    <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
    <node name="update_twist_node" pkg="usv_sim" type="update_vel.py" output="screen"/>
    <node name="joy_listener" pkg="usv_sim" type="joy_control.py" output="screen"/>
+   <node name="world2body_node" pkg="usv_sim" type="world2body.py" output="screen"/>
 </launch>
 
