@@ -5,8 +5,8 @@ from geometry_msgs.msg import Twist
 
 class PositionController:
     def __init__(self):
-        self.hxd = -50
-        self.hyd = 50
+        self.hxd = 100
+        self.hyd = 100
         self.uRef=0
         self.wRef=0
         self.hxe=0
@@ -16,8 +16,10 @@ class PositionController:
         self.current_y=0
         self.orientation=0
         self.current_heading=0
-        self.kv=1
-        self.kk=0.4
+        #kv= u max,    wmax= kk*pi + kv*0.5
+
+        self.kv=2
+        self.kk=0.159
         
         self.odom_subscriber = rospy.Subscriber('/boat/odom', Odometry, self.odom_callback)
         self.vel_publisher = rospy.Publisher('/boat/cmd_vel', Twist, queue_size=10)
