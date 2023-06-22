@@ -16,8 +16,8 @@ class JoyListener:
         self.angular_vel = 0.0
     
     def joy_callback(self, msg):
-        linear_vel_x = msg.axes[1]
-        self.angular_vel= msg.axes[2]*3
+        linear_vel_x = msg.axes[1]*2
+        self.angular_vel= msg.axes[2]*0.5
         self.twist_msg.linear.x = linear_vel_x
         self.twist_msg.angular.z = self.angular_vel
         self.pub.publish(self.twist_msg)
