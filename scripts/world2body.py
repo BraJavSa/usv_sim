@@ -59,7 +59,7 @@ class RobotController:
         self.odom.pose.pose.position.z = data.pose.pose.position.z
         self.odom.pose.pose.orientation.x = euler[2]
         self.odom.pose.pose.orientation.y = euler[1]
-        self.odom.pose.pose.orientation.z = abs(euler[0])
+        self.odom.pose.pose.orientation.z = euler[0]
         self.odom_pub.publish(self.odom)
         #print(chasisVel)
 
