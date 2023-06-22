@@ -65,16 +65,16 @@ class RobotController:
 
     def quat2eulers(self, q0, q1, q2, q3):
 
-        roll = math.atan2(
+        yaw = math.atan2(
         2 * ((q2 * q3) + (q0 * q1)),
         q0**2 - q1**2 - q2**2 + q3**2
         )  # radians
         pitch = math.asin(2 * ((q1 * q3) - (q0 * q2)))
-        yaw = math.atan2(
+        roll = math.atan2(
             2 * ((q1 * q2) + (q0 * q3)),
             q0**2 + q1**2 - q2**2 - q3**2
         )
-        return (roll, pitch, yaw)
+        return (yaw, pitch, roll)
 
     def start(self):
         rospy.spin()
