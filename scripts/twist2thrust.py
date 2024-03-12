@@ -12,6 +12,9 @@ class VelNode:
         self.subscriber = rospy.Subscriber('boat/cmd_vel', Twist, self.callback)
         self.pub_l = rospy.Publisher('/wamv/thrusters/left_thrust_cmd', Float32, queue_size=10)
         self.pub_r = rospy.Publisher('/wamv/thrusters/right_thrust_cmd', Float32, queue_size=10)
+        self.pub_l1 = rospy.Publisher('/wamv/thrusters/left1_thrust_cmd', Float32, queue_size=10)
+        self.pub_r1 = rospy.Publisher('/wamv/thrusters/right1_thrust_cmd', Float32, queue_size=10)
+      
         self.m_l = Float32()
         self.m_r = Float32()
         self.rate = rospy.Rate(100)  # Frecuencia de ejecución de 10 Hz
@@ -43,6 +46,8 @@ class VelNode:
         self.m_r.data=matrizn[1]
         self.pub_l.publish(self.m_l)
         self.pub_r.publish(self.m_r)
+        self.pub_l1.publish(self.m_l)
+        self.pub_r1.publish(self.m_r)
         self.rate.sleep()
 
     def run(self):
