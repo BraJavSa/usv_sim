@@ -12,7 +12,7 @@ class JoyTeleop:
         rospy.Subscriber("/joy2", Joy, self.joy_callback)
 
         # Publicar al topic de comando twist
-        self.cmd_pub = rospy.Publisher('/command/twist', Twist, queue_size=10)
+        self.cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
         # Velocidades máximas permitidas
         self.max_linear_x_speed = 1.0  # Ajustar según sea necesario
