@@ -11,6 +11,7 @@ class UpdateNode:
         self.vel_sub = rospy.Subscriber("command_boat/cmd", Twist, self.update_velocity)
         self.vel = Twist()
  
+ 
     def update_velocity(self, vel):
     	self.vel = vel
 

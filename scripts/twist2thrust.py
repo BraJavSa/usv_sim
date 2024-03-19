@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import rospy
 import numpy as np
+import math
+
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
 
@@ -22,28 +24,19 @@ class VelNode:
     def callback(self, data):
         # Realiza aquí las operaciones o acciones deseadas con los datos recibidos
 
-        DISTANCIA_ENTRE_RUEDAS=0.647*2
+        DISTANCIA_ENTRE_PROPULSORES=0.7*2
         matrizn=[[0], [0]]
-        if abs(data.linear.x)<=2:
-            vx=data.linear.x/2
-        elif data.linear.x < -2:
-            vx=-1
-        else:
-            vx=1
-        if abs(data.angular.z)<=0.5:
-            vy=data.angular.z
-        elif data.angular.z < -0.5:
-            vy=-0.5
-        else:
-            vy=0.5
-        vy=vy*3.0915
 
-        
-        matrizn[0]=(2 * vx - vy * DISTANCIA_ENTRE_RUEDAS) / 2
-        matrizn[1]=(2 * vx + vy * DISTANCIA_ENTRE_RUEDAS) / 2
+        matrizn[0]=data.linear.x/2 + data.angular.z * DISTANCIA_ENTRE_PROPULSORES / (2*0.49)
+        if abs(matrizn[0])>1:
+            matrizn[0]=math.copysign(1, matrizn[0])*1
+        matrizn[1]=data.linear.x/2 - data.angular.z * DISTANCIA_ENTRE_PROPULSORES / (2*0.49)
+        if abs(matrizn[1])>1:
+            matrizn[1]=math.copysign(1, matrizn[1])*1
 
-        self.m_l.data=matrizn[0]
-        self.m_r.data=matrizn[1]
+
+        self.m_l.data=matrizn[1]
+        self.m_r.data=matrizn[0]
         self.pub_l.publish(self.m_l)
         self.pub_r.publish(self.m_r)
         self.pub_l1.publish(self.m_l)

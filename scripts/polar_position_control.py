@@ -19,12 +19,12 @@ class PositionController:
         self.current_heading=0
         #kv= u max,    wmax= kk*pi + kv*0.5
 
-        self.kv=10
-        self.kk=0.5
-        self.k2=1
+        self.kv=1.5
+        self.kk=0.35
+        self.k2=2
         self.odom_subscriber = rospy.Subscriber('/boat/odom', Odometry, self.odom_callback)
         self.vel_publisher = rospy.Publisher('/boat/cmd_vel', Twist, queue_size=10)
-        self.rate = rospy.Rate(10)
+        self.rate = rospy.Rate(100)
 
     def odom_callback(self, odom_msg):
         self.current_x = odom_msg.pose.pose.position.x
@@ -33,8 +33,7 @@ class PositionController:
     
 
     def control(self):
-        self.hxe=self.hxd-self.current_x
-        
+        self.hxe=self.hxd-self.current_x        
         self.hye=self.hyd-self.current_y
         
         error=math.sqrt(self.hxe**2 + self.hye**2)
