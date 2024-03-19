@@ -7,8 +7,8 @@ from sensor_msgs.msg import Joy
 class UpdateNode:
     def __init__(self):
         rospy.init_node("update_twist_node")
-        self.vel_pub= rospy.Publisher("boat/cmd_vel", Twist, queue_size=10)     
-        self.vel_sub = rospy.Subscriber("command_boat/cmd", Twist, self.update_velocity)
+        self.vel_pub= rospy.Publisher("command/twiste", Twist, queue_size=10)     
+        self.vel_sub = rospy.Subscriber("command_drone/cmd", Twist, self.update_velocity)
         self.vel = Twist()
  
     def update_velocity(self, vel):

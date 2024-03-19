@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rospy
 import math
 from nav_msgs.msg import Odometry
@@ -18,9 +19,9 @@ class PositionController:
         self.current_heading=0
         #kv= u max,    wmax= kk*pi + kv*0.5
 
-        self.kv=1.5
-        self.kk=0.1
-        self.k2=0.1
+        self.kv=10
+        self.kk=0.5
+        self.k2=1
         self.odom_subscriber = rospy.Subscriber('/boat/odom', Odometry, self.odom_callback)
         self.vel_publisher = rospy.Publisher('/boat/cmd_vel', Twist, queue_size=10)
         self.rate = rospy.Rate(10)
@@ -39,12 +40,6 @@ class PositionController:
         error=math.sqrt(self.hxe**2 + self.hye**2)
         a_e= math.atan2(self.hye, self.hxe)-self.orientation
 
-        if error <=10:
-            self.kv=0.3
-            self.kk=0.1
-        else:
-            self.kv=1.5
-            self.kk=0.1
 
 
         if error <=1:
