@@ -4,6 +4,8 @@ import rospy
 from std_msgs.msg import Float64
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
+from tf.transformations import euler_from_quaternion
+
 import math
 import numpy as np
 
@@ -18,20 +20,20 @@ class RobotController:
     def odometry_callback(self, data):
         chasisPos_X = data.pose.pose.position.x
         chasisPos_Y = data.pose.pose.position.y
+        chasisPos_Z = data.pose.pose.position.z
         quaterW = data.pose.pose.orientation.w
         quaterX = data.pose.pose.orientation.x 
         quaterY = data.pose.pose.orientation.y
         quaterZ = data.pose.pose.orientation.z 
-        euler = self.quat2eulers(quaterW, quaterZ, quaterY, quaterX)
-        orient = euler[0]
+        orientation_list = [quaterX, quaterY, quaterZ, quaterW]
+        euler = euler_from_quaternion(orientation_list)
+        orient = euler[2]
         signo = 1
         if orient < 0:
             signo = -1
 
         orient = -signo * (math.pi - signo * orient)
-        chasisPos = [chasisPos_X, chasisPos_Y, orient]
-        #print("Position")
-        #print(chasisPos)
+        chasisPos = [chasisPos_X, chasisPos_Y, chasisPos_Z]
 
         chasisVel_W_X = data.twist.twist.linear.x 
         chasisVel_W_Y = data.twist.twist.linear.y
@@ -63,18 +65,6 @@ class RobotController:
         self.odom_pub.publish(self.odom)
         #print(chasisVel)
 
-    def quat2eulers(self, q0, q1, q2, q3):
-
-        yaw = math.atan2(
-        2 * ((q2 * q3) + (q0 * q1)),
-        q0**2 - q1**2 - q2**2 + q3**2
-        )  # radians
-        pitch = math.asin(2 * ((q1 * q3) - (q0 * q2)))
-        roll = math.atan2(
-            2 * ((q1 * q2) + (q0 * q3)),
-            q0**2 + q1**2 - q2**2 - q3**2
-        )
-        return (yaw, pitch, roll)
 
     def start(self):
         rospy.spin()
