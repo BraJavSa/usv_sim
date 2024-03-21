@@ -13,88 +13,115 @@ class OdomSubscriber:
         self.odom_sub = rospy.Subscriber('/wamv/sensors/position/p3d_wamv', Odometry, self.odom_callback)
         self.vel_sub = rospy.Subscriber('/boat/odom', Odometry, self.vel_callback)
         self.contro_sub = rospy.Subscriber('/boat/cmd', Twist, self.control_callback)
+        self.timer = rospy.Timer(rospy.Duration(0.1), self.update_data)
+
         self.x_positions = []
         self.y_positions = []
         self.z_positions = []
-        self.vel_u = []
-        self.vel_w = []
-        self.control_u = []
-        self.control_w = []
+        self.vels_u = []
+        self.vels_w = []
+        self.controls_u = []
+        self.controls_w = []
         self.times = []
-        self.times1 = []
-        self.init_time = 0
-        self.init_time1 = 0
-        self.barrera = False
-        self.barrera1 = False
+        self.Xs_d=[]
+        self.Ys_d=[]
 
-        # Valores diferentes de X_d para cada gráfica
-        self.X_d_values = [100, 150, 75, 50]  # Ejemplo: 100 para x, 150 para x (repetido), 75 para y, 50 para z
+        self.x_position = 0
+        self.y_position = 0
+        self.z_position = 0
+        self.vel_u = 0
+        self.vel_w = 0
+        self.control_u = 0
+        self.control_w = 0
+        self.time = 0
+        self.X_d=100
+        self.Y_d=100
+
+    def update_data(self, event):
+
+        self.time += 100
+        self.x_positions.append(self.x_position)
+        self.y_positions.append(self.y_position)
+        self.z_positions.append(self.z_position)
+        self.vels_u.append(self.vel_u)
+        self.vels_w.append(self.vel_w)
+        self.controls_u.append(self.control_u)
+        self.controls_w.append(self.controls_w)
+        self.Xs_d.append(self.X_d)
+        self.Ys_d.append(self.Y_d)
+        self.times.append(self.time)
+        self.update_plot()
+
+
+
+
 
     def odom_callback(self, msg):
-        if not self.barrera:
-            self.init_time = rospy.get_time()
-            self.barrera = True
-        current_time = rospy.get_time() - self.init_time
-        self.times.append(current_time)
-        self.x_positions.append(msg.pose.pose.position.x)
-        self.y_positions.append(msg.pose.pose.position.y)
-        self.z_positions.append(msg.pose.pose.position.z)
+        self.x_position=msg.pose.pose.position.x
+        self.y_position=msg.pose.pose.position.y
+        self.z_position=msg.pose.pose.position.z
     
     def vel_callback(self, msg):
-        if not self.barrera1:
-            self.init_time1 = rospy.get_time()
-            self.barrera1 = True
-        current_time = rospy.get_time() - self.init_time1
-        self.times1.append(current_time)
-        self.vel_u.append(msg.twist.twist.linear.x)
-        self.vel_w.append(msg.twist.twist.angular.z)
+
+        self.vel_u=msg.twist.twist.linear.x
+        self.vel_w=msg.twist.twist.angular.z
 
     def control_callback(self, msg):
-        self.X_d_values[2]=msg.twist.twist.linear.x
-        self.X_d_values[3]=msg.twist.twist.angular.z
+        self.control_u=msg.twist.twist.linear.x
+        self.control_w=msg.twist.twist.angular.z
         
 
 
     def update_plot(self):
-        fig, axs = plt.subplots(2, 2, figsize=(10, 6))
-        fig.suptitle('Position vs. Time')
 
-        # Configuración inicial de cada subgráfico
-        axs_flat = axs.flat  # Aplanar el arreglo de subgráficos para iterar más fácilmente
-        for i, ax in enumerate(axs_flat):
-            ax.set_xlabel('Time')
-            ax.set_ylabel('Position')
-            ax.set_ylim(0, 300)
-            ax.axhline(y=self.X_d_values[i], color='r', linestyle='--', label=f'X_d = {self.X_d_values[i]}')
-            ax.legend()
-
-        plt.tight_layout()
-        plt.ion()
-        plt.show()
-
+                # Configurar la figura y los ejes
+        fig, axs = plt.subplots(2, 2)
         while not rospy.is_shutdown():
-            if not (self.barrera and self.barrera1):
-                pass
-            else:
-                # Verificar si las listas tienen la misma longitud
-                if len(self.times1) != len(self.vel_u) :
-                    continue  # Salir de la iteración actual si las dimensiones son diferentes
-                
-                # Actualización de datos en cada subgráfico
-                axs_flat[0].plot(self.times, self.x_positions, color='b', label='X Position')
-                axs_flat[1].plot(self.times, self.y_positions, color='b', label='Y Position')  # Repetido para ejemplo
-                axs_flat[2].plot(self.times1, self.vel_u, color='b', label='U velocity')
-                axs_flat[3].plot(self.times1, self.vel_w, color='b', label='W velocity')
-                axs_flat[2].set_ylim(-2.3, 2.3)
-                axs_flat[3].set_ylim(-1, 1)
-                plt.draw()
-                plt.pause(0.01)
+        # Limpiar las gráficas
+            for ax in axs.flatten():
+                ax.clear()
+            # Gráfica 1: X position
+            axs[0, 0].plot(self.times, self.x_positions, 'b', label='Xr')
+            axs[0, 0].plot(self.times, self.Xs_d, 'r', label='Xd')
+            axs[0, 0].set_title('X position')
+            axs[0, 0].set_ylabel('X position')
+            axs[0, 0].set_xlabel('ms')
+            axs[0, 0].legend()
+
+            # Gráfica 2: Y position
+            axs[0, 1].plot(self.times, self.y_positions, 'b', label='Yr')
+            axs[0, 1].plot(self.times, self.Ys_d, 'r', label='Yd')
+            axs[0, 1].set_title('Y position')
+            axs[0, 1].set_ylabel('meters')
+            axs[0, 1].set_xlabel('ms')
+            axs[0, 1].legend()
+
+            # Gráfica 3: U Velocities
+            axs[1, 0].plot(self.times, self.vels_u, 'b', label='Ur')
+            axs[1, 0].plot(self.times, self.controls_u, 'r', label='Uc')
+            axs[1, 0].set_title('U Velocities')
+            axs[1, 0].set_ylabel('m/s')
+            axs[1, 0].set_xlabel('ms')
+            axs[1, 0].legend()
+
+            # Gráfica 4: W Velocities
+            axs[1, 1].plot(self.times, self.vels_w, 'b', label='Wr')
+            axs[1, 1].plot(self.times, self.controls_w, 'r', label='Wc')
+            axs[1, 1].set_title('W Velocities')
+            axs[1, 1].set_ylabel('rad/s')
+            axs[1, 1].set_xlabel('ms')
+            axs[1, 1].legend()
+
+            # Ajustar el diseño
+            plt.tight_layout()
+
+            # Mostrar la gráfica
+            plt.show()
+            plt.pause(0.01)
 
 
 
     def run(self):
-        plot_thread = Thread(target=self.update_plot)
-        plot_thread.start()
         rospy.spin()
 
 if __name__ == '__main__':

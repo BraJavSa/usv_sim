@@ -7,8 +7,8 @@ from tf.transformations import euler_from_quaternion
 
 class PositionController:
     def __init__(self):
-        self.hxd = -200
-        self.hyd = -10
+        self.hxd = 100
+        self.hyd = 100
         self.uRef=0
         self.wRef=0
         self.hxe=0
@@ -84,9 +84,6 @@ class PositionController:
         twist_msg = Twist()
         twist_msg.linear.x = self.uRef
         twist_msg.angular.z = self.wRef
-        
-
-        print(str(self.uRef)+","+str(self.wRef)+", e_a: "+str(angular_difference)+", error:"+str(error))
         self.vel_publisher.publish(twist_msg)
         self.rate.sleep()
         
