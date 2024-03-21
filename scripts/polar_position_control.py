@@ -2,13 +2,19 @@
 import rospy
 import math
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PoseStamped
+
 from tf.transformations import euler_from_quaternion
+from setpoint_gazebo_delete import delete_gazebo_model
+from setpoint_gazebo_print import  load_gazebo_model
+
 
 class PositionController:
     def __init__(self):
-        self.hxd = 100
-        self.hyd = 100
+        self.hxd = 0
+        self.hyd = 0
+        self.hxd1 = 0
+        self.hyd1 = 0
         self.uRef=0
         self.wRef=0
         self.hxe=0
@@ -21,15 +27,18 @@ class PositionController:
         self.ori_y=0
         self.ori_z=0
         self.ori_w=0
+        self.bandera=False
         #kv= u max,    wmax= kk*pi + kv*0.5
 
         self.kv=1.9
 
         self.kk=0.5
-        self.k2=1
+        self.k2=0.08
         self.odom_subscriber = rospy.Subscriber('wamv/sensors/position/p3d_wamv', Odometry, self.odom_callback)
+        self.pose_sub = rospy.Subscriber("boat/pose_d", PoseStamped, self.update_position)
+
         self.vel_publisher = rospy.Publisher('/boat/cmd_vel', Twist, queue_size=10)
-        self.rate = rospy.Rate(100)
+        self.rate = rospy.Rate(15)
 
     def odom_callback(self, odom_msg):
         self.current_x = odom_msg.pose.pose.position.x
@@ -39,6 +48,23 @@ class PositionController:
         self.ori_y = odom_msg.pose.pose.orientation.y
         self.ori_z = odom_msg.pose.pose.orientation.z
         self.ori_w = odom_msg.pose.pose.orientation.w
+
+    def update_position(self, data):
+        self.hxd = data.pose.position.x
+        self.hyd = data.pose.position.y
+        if self.hxd1 == self.hxd and self.hyd1 == self.hyd:
+            pass
+        else:
+            self.hxd1 = self.hxd
+            self.hyd1 = self.hyd
+            if self.bandera:
+                delete_gazebo_model("win_point")
+                load_gazebo_model(self.hxd,self.hyd)
+                
+            else:
+                load_gazebo_model(self.hxd,self.hyd)
+                self.bandera=True
+
 
     
     def normal_angulo(self, angulo):
@@ -66,19 +92,13 @@ class PositionController:
         # Calcular la diferencia de ángulo entre el ángulo deseado y el ángulo actual
         angular_difference = self.normal_angulo(self.normal_angulo(a_e) - self.normal_angulo(current_angle[2]))
         
-        if abs(angular_difference)>0.3 and error>=10:
-            
-            self.wRef=self.kk*angular_difference+self.kv*(math.tanh(self.k2*error)/error)*math.sin(angular_difference)*math.cos(angular_difference)
+        if error <=0.5:
             self.uRef=0
+            self.wRef=0          
         else:
-            self.kk=0.5
-            if error <=2:
-                self.uRef=0
-                self.wRef=0          
-            else:
-                self.uRef=self.kv*math.tanh(self.k2*error)*math.cos(angular_difference)
-                self.wRef=self.kk*angular_difference+self.kv*(math.tanh(self.k2*error)/error)*math.sin(angular_difference)*math.cos(angular_difference)
-            
+            self.uRef=self.kv*math.tanh(self.k2*error)*math.cos(angular_difference)
+            self.wRef=self.kk*angular_difference+self.kv*(math.tanh(self.k2*error)/error)*math.sin(angular_difference)*math.cos(angular_difference)
+        
 
 
         twist_msg = Twist()
