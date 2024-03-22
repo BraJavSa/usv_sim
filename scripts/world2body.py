@@ -15,7 +15,7 @@ class RobotController:
         self.subscriber = rospy.Subscriber('/wamv/sensors/position/p3d_wamv', Odometry, self.odometry_callback)
         self.odom_pub= rospy.Publisher("boat/odom", Odometry, queue_size=10)
         self.odom = Odometry()
-        rate = rospy.Rate(100)
+        rate = rospy.Rate(10)
 
     def odometry_callback(self, data):
         chasisPos_X = data.pose.pose.position.x

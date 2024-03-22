@@ -13,7 +13,7 @@ class OdomSubscriber:
         self.odom_sub = rospy.Subscriber('/wamv/sensors/position/p3d_wamv', Odometry, self.odom_callback)
         self.vel_sub = rospy.Subscriber('/boat/odom', Odometry, self.vel_callback)
         self.contro_sub = rospy.Subscriber('/boat/cmd', Twist, self.control_callback)
-        self.pose_sub = rospy.Subscriber("boat/pose_d", PoseStamped, self.position_callback)
+        self.pose_sub = rospy.Subscriber("/boat/pose_d", PoseStamped, self.position_callback)
 
         self.max_length = 15  # Longitud máxima de datos en el eje x
 
