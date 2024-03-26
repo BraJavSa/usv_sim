@@ -73,9 +73,21 @@ For position control based on polar coordinates:
     
     open a second terminal and use the "/boat/posed" topic for set a new position
 
-if you want to create a new control script you can use:
+If you want to create a new control script you can use:
 
     ```
     roslaunch usv_sim sandisland.launch
     ```
 Look at "rosrun pxe_offboard_control prueba.py" as an example
+
+On other terminal run "roslaunch wamv_gazebo rviz_vrx.launch" for open rviz
+
+
+For changes in any xacro file, it is necessary to run 'catkin_make' in 'cd ~/catkin_ws' to see the changes. 
+It may be necessary to assign permissions to the scripts.
+
+If you want to modify the wind or add elements to the map, use '/vrx/vrx_2019/worlds/sandisland.xacro'
+
+If you want to modify the waves, use: '/vrx/wave_gazebo/worlds_models/ocean_waves/model.xacro'.
+
+
