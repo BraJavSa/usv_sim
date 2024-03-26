@@ -35,7 +35,7 @@ def load_gazebo_model(model_pose_x, model_pose_y):
         
         # Verifica la respuesta para asegurarse de que el modelo se cargó correctamente
         if response.success:
-            print(f"Modelo '{model_name}' cargado correctamente.")
+            pass
         else:
             print(f"No se pudo cargar el modelo '{model_name}'.")
     except rospy.ServiceException as e:

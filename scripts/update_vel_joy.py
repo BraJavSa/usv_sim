@@ -8,7 +8,7 @@ class UpdateNode:
     def __init__(self):
         rospy.init_node("update_twist_node")
         self.vel_pub= rospy.Publisher("boat/cmd_vel", Twist, queue_size=10)     
-        self.vel_sub = rospy.Subscriber("/boat/cmd", Twist, self.update_velocity)
+        self.vel_sub = rospy.Subscriber("command_boat/cmd", Twist, self.update_velocity)
         self.vel = Twist()
  
  
@@ -31,11 +31,12 @@ class UpdateNode:
 def main():
     manual_mode = UpdateNode()
     manual_mode.send_initial_velocity()
-    rate = rospy.Rate(100)
+    rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
         manual_mode.process()
-        
+        rate.sleep()
+
 if __name__ == "__main__":
     try:
         main()

@@ -18,7 +18,7 @@ def delete_gazebo_model(model_name):
         
         # Verifica la respuesta para asegurarse de que el modelo se eliminó correctamente
         if response.success:
-            print(f"Modelo '{model_name}' eliminado correctamente.")
+            pass
         else:
             print(f"No se pudo eliminar el modelo '{model_name}'.")
     except rospy.ServiceException as e:

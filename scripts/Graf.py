@@ -5,14 +5,13 @@ from geometry_msgs.msg import Twist, PoseStamped
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from threading import Thread
-
+import math
 class OdomSubscriber:
     def __init__(self):
         rospy.init_node('odom_subscriber', anonymous=True)
         self.odom_sub = rospy.Subscriber('/wamv/sensors/position/p3d_wamv', Odometry, self.odom_callback)
         self.vel_sub = rospy.Subscriber('/boat/odom', Odometry, self.vel_callback)
-        self.contro_sub = rospy.Subscriber('/boat/cmd', Twist, self.control_callback)
+        self.contro_sub = rospy.Subscriber('/boat/cmd_vel', Twist, self.control_callback)
         self.pose_sub = rospy.Subscriber("/boat/pose_d", PoseStamped, self.position_callback)
 
         self.max_length = 15  # Longitud máxima de datos en el eje x
@@ -38,6 +37,7 @@ class OdomSubscriber:
         self.time = 0
         self.X_d = 0
         self.Y_d = 0
+        self.error=0
 
         # Crear la figura y los subplots
         self.fig, self.axs = plt.subplots(2, 2)
@@ -68,6 +68,8 @@ class OdomSubscriber:
         self.Xs_d.append(self.X_d)
         self.Ys_d.append(self.Y_d)
         self.times.append(self.time)
+        self.error=str(math.sqrt((self.y_position-self.Y_d)**2+(self.x_position-self.X_d)**2))
+
 
         # Actualizar gráficos en tiempo real
         self.axs[0, 0].clear()
@@ -102,6 +104,7 @@ class OdomSubscriber:
         self.axs[0, 1].set_ylim(-50, 50)
         self.axs[1, 0].set_ylim(-2, 2)
         self.axs[1, 1].set_ylim(-0.8, 0.8)
+        #print("Error: "+self.error)
 
     def odom_callback(self, msg):
         self.x_position = msg.pose.pose.position.x
@@ -113,8 +116,8 @@ class OdomSubscriber:
         self.vel_w = msg.twist.twist.angular.z
 
     def control_callback(self, msg):
-        self.control_u = msg.twist.twist.linear.x
-        self.control_w = msg.twist.twist.angular.z
+        self.control_u = msg.linear.x
+        self.control_w = msg.angular.z
     def position_callback(self, data):
         self.X_d = data.pose.position.x
         self.Y_d= data.pose.position.y

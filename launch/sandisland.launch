@@ -2,7 +2,7 @@
 <launch>
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find vrx_gazebo)/config/custom_rosconsole.conf"/>
   <!-- Gazebo world to load -->
-  <arg name="world" default="$(find usv_sim)/worlds/example_course.world" />
+  <arg name="world" default="$(find vrx_2019)/worlds/example_course.world" />
   <!-- If true, run gazebo GUI -->
   <arg name="gui" default="true" />
   <!-- If true, run gazebo in verbose mode -->
@@ -23,7 +23,7 @@
   <arg name="Y" default="-2.76" />
 
   <!-- If true, show non-competition ROS topics (/gazebo/model_states, /vrx/debug/wind/direction, etc.)-->
-  <arg name="non_competition_mode" default="false"/>
+  <arg name="non_competition_mode" default="true"/>
   <arg name="enable_ros_network" value="$(arg non_competition_mode)"/>
   <env name="VRX_DEBUG" value="$(arg non_competition_mode)"/>
   <env unless="$(arg non_competition_mode)" name="GAZEBO_MODEL_PATH" value="$(find vrx_gazebo)/models:$(find wamv_gazebo)/models:$(find wamv_description)/models:$(optenv GAZEBO_MODEL_PATH)"/>
@@ -38,8 +38,8 @@
   <arg name="camera_enabled"       default="true" />
   <arg name="gps_enabled"          default="true" />
   <arg name="imu_enabled"          default="true" />
-  <arg name="lidar_enabled"        default="false" />
-  <arg name="ground_truth_enabled" default="false" />
+  <arg name="lidar_enabled"        default="true" />
+  <arg name="ground_truth_enabled" default="true" />
 
   <!-- Start Gazebo with the world file -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -74,10 +74,9 @@
         args="-x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg R) -P $(arg P) -Y $(arg Y)
               --urdf $(arg urdf) --model wamv"/>
-   <node name="vel_node_py" pkg="usv_sim" type="twist2thrust.py" output="screen"/>
-   <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
-   <node name="update_twist_node" pkg="usv_sim" type="update_vel.py" output="screen"/>
-   <node name="joy_listener" pkg="usv_sim" type="joy_control.py" output="screen"/>
-   <node name="world2body_node" pkg="usv_sim" type="world2body.py" output="screen"/>
+      <node name="world2body" pkg="usv_sim" type="world2body.py" output="screen"/>
+
+
+
 </launch>
 
