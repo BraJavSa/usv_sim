@@ -19,7 +19,7 @@ class VelNode:
       
         self.m_l = Float32()
         self.m_r = Float32()
-        self.rate = rospy.Rate(100)  # Frecuencia de ejecución de 10 Hz
+        self.rate = rospy.Rate(10)  # Frecuencia de ejecución de 10 Hz
 
     def callback(self, data):
         # Realiza aquí las operaciones o acciones deseadas con los datos recibidos

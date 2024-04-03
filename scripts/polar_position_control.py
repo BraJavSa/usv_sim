@@ -13,8 +13,6 @@ class PositionController:
     def __init__(self):
         self.hxd = 0
         self.hyd = 0
-        self.hxd1 = 0
-        self.hyd1 = 0
         self.uRef=0
         self.wRef=0
         self.hxe=0
@@ -27,15 +25,14 @@ class PositionController:
         self.ori_y=0
         self.ori_z=0
         self.ori_w=0
-        self.bandera=False
         #kv= u max,    wmax= kk*pi + kv*0.5
         self.rate = rospy.Rate(100)
         self.kv=1.7
-        self.kk=0.2
+        self.kk=1.7
         self.k2=0.05
         self.odom_subscriber = rospy.Subscriber('wamv/sensors/position/p3d_wamv', Odometry, self.odom_callback)
         self.pose_sub = rospy.Subscriber("/boat/pose_d", PoseStamped, self.update_position)
-        self.vel_publisher = rospy.Publisher('/boat/cmd_vel', Twist, queue_size=10)
+        self.vel_publisher = rospy.Publisher('/boat/cmd', Twist, queue_size=10)
 
 
     def odom_callback(self, odom_msg):
@@ -50,18 +47,7 @@ class PositionController:
     def update_position(self, data):
         self.hxd = data.pose.position.x
         self.hyd = data.pose.position.y
-        if self.hxd1 == self.hxd and self.hyd1 == self.hyd:
-            pass
-        else:
-            self.hxd1 = self.hxd
-            self.hyd1 = self.hyd
-            if self.bandera==True:
-                delete_gazebo_model("win_point")
-                load_gazebo_model(self.hxd,self.hyd)
-                
-            else:
-                load_gazebo_model(self.hxd,self.hyd)
-                self.bandera=True
+
             
 
     

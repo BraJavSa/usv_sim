@@ -2,45 +2,30 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 
-
 class UpdateNode:
     def __init__(self):
         rospy.init_node("update_pose_node")
-        self.pose_pub= rospy.Publisher("boat/pose_d", PoseStamped, queue_size=10)     
-        self.pose_sub = rospy.Subscriber("boat/posed", PoseStamped, self.update_position)
-        self.var = PoseStamped()
- 
- 
-    def update_position(self, var):
-    	self.var = var
+        self.pose_pub = rospy.Publisher("/boat/pose_d", PoseStamped, queue_size=10)
+        self.pose_sub = rospy.Subscriber("/boat/posed", PoseStamped, self.update_desired_pose)
+        self.desired_pose = PoseStamped()
+        self.desired_pose.pose.position.x = 0
+        self.desired_pose.pose.position.y = 0
+        self.desired_pose.pose.position.z = 0
+        self.rate = rospy.Rate(10)  # Frecuencia de publicación de 100 Hz
+    
+    def update_desired_pose(self, msg):
+        # Actualizar la pose deseada si se recibe un nuevo mensaje
+        self.desired_pose = msg
 
-    def send_initial_velocity(self):
-        
-        self.var.pose.position.x=0
-        self.var.pose.position.y=0
-        self.var.pose.position.z=0
-        self.var.pose.orientation.x=0
-        self.var.pose.orientation.y=0
-        self.var.pose.orientation.z=0
-        self.var.pose.orientation.w=1
-        self.pose_pub.publish(self.var)
-
-
-
-    def process(self):   
-        self.pose_pub.publish(self.var)
+    def publish_initial_pose(self):
+        # Publicar la pose inicial cada 100 Hz
+        while not rospy.is_shutdown():
+            self.pose_pub.publish(self.desired_pose)
+            self.rate.sleep()
 
 def main():
     manual_mode = UpdateNode()
-    manual_mode.send_initial_velocity()
-    rate = rospy.Rate(30)
-
-    while not rospy.is_shutdown():
-        manual_mode.process()
-        rate.sleep()
+    manual_mode.publish_initial_pose()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except IOError as e:
-        print(e)
+    main()

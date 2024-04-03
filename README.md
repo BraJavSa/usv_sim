@@ -46,6 +46,7 @@ then close all terminals and open one again
     git clone https://github.com/BraJavSa/hector-quadrotor-noetic.git
     git clone https://github.com/BraJavSa/px4_offboard_control.git
     git clone https://github.com/BraJavSa/usv_sim.git
+    git clone https://github.com/ros-simulation/gazebo_ros_pkgs.git
     git clone -b gazebo_classic https://github.com/BraJavSa/vrx.git 
     catkin_make
     ```
