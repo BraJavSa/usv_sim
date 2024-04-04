@@ -26,10 +26,10 @@ class PositionController:
         self.ori_z=0
         self.ori_w=0
         #kv= u max,    wmax= kk*pi + kv*0.5
-        self.rate = rospy.Rate(100)
-        self.kv=1.7
-        self.kk=1.7
-        self.k2=0.05
+        self.rate = rospy.Rate(50)
+        self.kv=1.8
+        self.kk=1.5
+        self.k2=0.08
         self.odom_subscriber = rospy.Subscriber('wamv/sensors/position/p3d_wamv', Odometry, self.odom_callback)
         self.pose_sub = rospy.Subscriber("/boat/pose_d", PoseStamped, self.update_position)
         self.vel_publisher = rospy.Publisher('/boat/cmd', Twist, queue_size=10)
@@ -87,6 +87,8 @@ class PositionController:
 
         twist_msg = Twist()
         twist_msg.linear.x = self.uRef
+        if abs(self.wRef)>0.7:
+            self.wRef==math.copysign(1, self.wRef)*0.7
         twist_msg.angular.z = self.wRef
         self.vel_publisher.publish(twist_msg)
         self.rate.sleep()

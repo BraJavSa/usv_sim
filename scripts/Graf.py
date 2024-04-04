@@ -102,8 +102,8 @@ class OdomSubscriber:
 
         self.axs[0, 0].set_ylim(-50, 50)
         self.axs[0, 1].set_ylim(-50, 50)
-        self.axs[1, 0].set_ylim(-2, 2)
-        self.axs[1, 1].set_ylim(-0.8, 0.8)
+        self.axs[1, 0].set_ylim(-2.2, 2.2)
+        self.axs[1, 1].set_ylim(-1.5, 1.5)
         #print("Error: "+self.error)
 
     def odom_callback(self, msg):
