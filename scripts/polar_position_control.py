@@ -88,7 +88,7 @@ class PositionController:
         twist_msg = Twist()
         twist_msg.linear.x = self.uRef
         if abs(self.wRef)>0.7:
-            self.wRef==math.copysign(1, self.wRef)*0.7
+            self.wRef=math.copysign(1, self.wRef)*0.7
         twist_msg.angular.z = self.wRef
         self.vel_publisher.publish(twist_msg)
         self.rate.sleep()

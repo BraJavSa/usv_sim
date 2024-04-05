@@ -5,7 +5,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
 from nav_msgs.msg import Odometry
 #max u=2 m/s max w= 0.5 rad/s
-KP = 1.05  # Ganancia proporcional
+KP = 3  # Ganancia proporcional
 KD = 0.05  # Ganancia derivativa
 KPa = 1.0  # Ganancia proporcional
 KDa = 0.01  # Ganancia derivativa
@@ -29,7 +29,7 @@ class VelNode:
         self.last_error_linear = 0.0
         self.last_error_angular = 0.0
 
-        self.rate = rospy.Rate(100)  # Frecuencia de ejecución de 10 Hz
+        self.rate = rospy.Rate(200)  # Frecuencia de ejecución de 10 Hz
 
     def cmd_vel_callback(self, data):
         self.desired_linear_velocity = data.linear.x
@@ -38,10 +38,6 @@ class VelNode:
     def calculate_control_output(self):
         error_linear = self.desired_linear_velocity - self.current_linear_velocity
         error_angular = self.desired_angular_velocity - self.current_angular_velocity
-        self.control_linear = KP * error_linear 
-        self.control_angular = KP * error_angular 
-        self.error_integral_linear += error_linear
-        self.error_integral_angular += error_angular
 
         self.control_linear = KP * error_linear + KD * (error_linear - self.last_error_linear)
         self.control_angular = KPa * error_angular  + KDa * (error_angular - self.last_error_angular)

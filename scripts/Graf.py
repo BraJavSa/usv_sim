@@ -14,7 +14,7 @@ class OdomSubscriber:
         self.contro_sub = rospy.Subscriber('/boat/cmd_vel', Twist, self.control_callback)
         self.pose_sub = rospy.Subscriber("/boat/pose_d", PoseStamped, self.position_callback)
 
-        self.max_length = 15  # Longitud máxima de datos en el eje x
+        self.max_length = 700  # Longitud máxima de datos en el eje x
 
         self.x_positions = []
         self.y_positions = []
@@ -103,7 +103,7 @@ class OdomSubscriber:
         self.axs[0, 0].set_ylim(-50, 50)
         self.axs[0, 1].set_ylim(-50, 50)
         self.axs[1, 0].set_ylim(-2.2, 2.2)
-        self.axs[1, 1].set_ylim(-1.5, 1.5)
+        self.axs[1, 1].set_ylim(-0.8, 0.8)
         #print("Error: "+self.error)
 
     def odom_callback(self, msg):
