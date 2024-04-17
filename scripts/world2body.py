@@ -52,7 +52,7 @@ class RobotController:
         #print("Velocity")
         self.odom.twist.twist.linear.x=chasisVel[0]
         self.odom.twist.twist.linear.y=chasisVel[1]
-        self.odom.twist.twist.linear.z=chasisVel[2]
+        self.odom.twist.twist.linear.z=data.twist.twist.linear.z
         self.odom.twist.twist.angular.x=data.twist.twist.angular.x 
         self.odom.twist.twist.angular.y=data.twist.twist.angular.y 
         self.odom.twist.twist.angular.z=data.twist.twist.angular.z 
