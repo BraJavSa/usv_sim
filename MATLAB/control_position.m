@@ -2,27 +2,25 @@
 clc
 clear
 close all
-% Define execution rate (10 Hz)
-fr = 5;
-rate = rosrate(fr);
 
+global Xr Yr Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ euler_angles first_callback
+
+% Desired position
+Xd = -20; 
+Yd = 20;
+% Define execution rate 
+fr = 4;
+rate = rosrate(fr);
 ts = 1/fr;
-tf = 15;
+tf = 40;
 t = 0:ts:tf;
-tr=0;
+tr = 0;
+
 % Create publisher to send velocity commands to the robot
 cmdPub = rospublisher('/boat/cmd', 'geometry_msgs/Twist');
 
 % Initialize velocity message
 cmdMsg = rosmessage(cmdPub);
-
-
-
-
-% Initialize global variables for position, orientation, and velocity
-global Xr Yr Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ euler_angles Uref Wref first_callback
-Xr = 0; Yr = 0; Zr = 0; qX = 0; qY = 0; qZ = 0; qW = 0; aLX = 0; aLY = 0; aLZ = 0; aAX = 0; aAY = 0; aAZ = 0; euler_angles = [0,0,0]; primer_callback = false; Uref = 0; Wref = 0;
-
 
 % Create subscriber with defined callback
 posSub = rossubscriber('/wamv/sensors/position/p3d_wamv', 'nav_msgs/Odometry', @odometryCallback);
@@ -31,32 +29,36 @@ while ~first_callback
     waitfor(rate);
 end
 
-
-
-% Desired position
-Xd = 25; 
-Yd = 25;
-
 % Controller gains
 ku = 1.8; 
 kw = 1.5; 
-ks = 0.2; % Saturation gain
+ks = 0.08; % Saturation gain
 
 % Initialize figure for plotting vehicle position
- fig=figure('Name','Simulacion');
- set(fig,'position',[60 60 980 600]);
- axis square; cameratoolbar
- axis([-1 50 -1 50 0 1]);
- grid on
- MobileRobot;
- M1=MobilePlot(Xr,Yr,normalizeAngle(euler_angles(1)));hold on
- M2=plot(Xr,Yr,'b','LineWidth',2);
- 
+figure;
+hold on;
+grid on; % Turn on grid lines
+xlabel('X');
+ylabel('Y');
+title('USV Position');
+
+% Plot the desired point
+plot(Xd, Yd, 'go', 'MarkerSize', 10, 'LineWidth', 2); % Plot the desired point in green
+
 disp("Position Controller")
+xrk(1) = Xr;
+yrk(1) = Yr;
+% Calculate position error
+Xe(1) = Xd - Xr;
+Ye(1) = Yd - Yr;
+error(1) = sqrt(Xe(1)^2 + Ye(1)^2);
+plot_handle = plot(xrk(1),yrk(1), 'ro', 'MarkerSize', 4, 'MarkerFaceColor', 'r', 'LineWidth', 2);  % Initialize the plot with a red circle
+Uref(1)=0;
+Wref(1)=0;
 % Main loop
-for k = 1:length(t)
-    xrk(k)=Xr;
-    yrk(k)=Yr;
+for k = 2:length(t)
+    xrk(k) = Xr;
+    yrk(k) = Yr;
     % Calculate position error
     Xe(k) = Xd - Xr;
     Ye(k) = Yd - Yr;
@@ -72,31 +74,55 @@ for k = 1:length(t)
         Uref(k) = ku * tanh(ks * error(k)) * cos(angular_difference(k));
         Wref(k) = kw * angular_difference(k) + ku * (tanh(ks * error(k)) / error(k)) * sin(angular_difference(k)) * cos(angular_difference(k));
     end
-     delete (M1)
-     delete (M2)
-     M1=MobilePlot(xrk(k),yrk(k),euler_angles(1)); hold on
-     M2=plot(xrk(2:k),yrk(2:k),'b','LineWidth',2);   
-     waitfor(rate);
+    
+
+    if abs(Wref(k)) > 0.7
+        Wref(k) = sign(Wref(k)) * 0.7;
+    end
+    
+    
+    set(plot_handle, 'XData', xrk(k), 'YData', yrk(k));
+    xlim([-25 25]); 
+    ylim([-25 25]);  
+
     % Publish velocity message
     cmdMsg.Linear.X = Uref(k);
     cmdMsg.Angular.Z = Wref(k);
     send(cmdPub, cmdMsg);
-    tr=tr+ts;
-    disp(t)
     % Wait for the next execution cycle
     waitfor(rate);
 end
-Uref(k) = 0;
-Wref(k) = 0; 
-cmdMsg.Linear.X = Uref(k);
-cmdMsg.Angular.Z = Wref(k);
+Uref(length(t)) = 0;
+Wref(length(t)) = 0; 
+cmdMsg.Linear.X = Uref(length(t));
+cmdMsg.Angular.Z = Wref(length(t));
 send(cmdPub, cmdMsg);
 disp("DONE")
 
+% Plot error evolution over time
+figure;
+plot(t, error, 'b', 'LineWidth', 1);
+xlabel('Time (s)');
+ylabel('Error');
+title('Error Evolution');
+
+% Plot error evolution over time
+figure;
+subplot(2, 1, 1);
+plot(t, Uref, 'b', 'LineWidth', 1);
+xlabel('Time (s)');
+ylabel('Uref');
+title('Uref Evolution');
+
+subplot(2, 1, 2);
+plot(t, Wref, 'r', 'LineWidth', 1);
+xlabel('Time (s)');
+ylabel('Wref');
+title('Wref Evolution');
+
 % Callback to update received position data
 function odometryCallback(src, msg)
-    global Xr Yr Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ euler_angles first_callback
-
+    global Xr Yr Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ first_callback euler_angles
     Xr = msg.Pose.Pose.Position.X; % Actual X position
     Yr = msg.Pose.Pose.Position.Y; % Actual Y position
     Zr = msg.Pose.Pose.Position.Z; % Actual Z position
@@ -106,7 +132,6 @@ function odometryCallback(src, msg)
     qW = msg.Pose.Pose.Orientation.W; % Quaternion W
     q = [qW, qX, qY, qZ];
     euler_angles = quat2eul(q); % Output ZYX (Yaw Pitch Roll)---q = [w, x, y, z] order used by MATLAB
-    
     aLX = msg.Twist.Twist.Linear.X; % Linear velocity X in Inertial frame
     aLY = msg.Twist.Twist.Linear.Y; % Linear velocity Y in Inertial frame
     aLZ = msg.Twist.Twist.Linear.Z; % Linear velocity Z in Inertial frame
@@ -115,7 +140,6 @@ function odometryCallback(src, msg)
     aAZ = msg.Twist.Twist.Angular.Z; % Angular velocity Z in Inertial frame
     
     % Update position data
-    
     if ~first_callback
         first_callback = true;
     end
