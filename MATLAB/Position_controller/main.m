@@ -6,10 +6,8 @@ close all;
 global Xr Yr euler_angles  %Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ
 
 % Desired position
- xrd = 40*sin(0.004*t);                           %Posición x
- yrd = 40*sin(0.002*t);                               %Posición y 
- xrdp= 40*cos(0.004*t)*0.4;  
- yrdp= 40*cos(0.002*t)*0.2;
+Xd = 15; 
+Yd = -17;
 
 % Define execution rate 
 fr = 4;
