@@ -1,0 +1,73 @@
+% Clear all existing variables
+clc
+clear
+close all;
+
+global Xr Yr euler_angles  
+
+% Desired position
+Xd = 15; 
+Yd = -17;
+
+% Define execution rate 
+fr = 4;
+rate = rosrate(fr);
+ts = 1/fr;
+tf = 5;
+t = 0:ts:tf;
+
+% Create publisher to send velocity commands to the robot
+cmdPub = rospublisher('/boat/cmd', 'geometry_msgs/Twist');
+
+% Initialize velocity message
+cmdMsg = rosmessage(cmdPub);
+
+% Create subscriber with defined callback
+posSub = rossubscriber('/wamv/sensors/position/p3d_wamv', 'nav_msgs/Odometry', @odometryCallback);
+
+for i = 1:3
+    pause(0.1);
+end
+
+% Initial conditions
+Uref(1) = 0;
+Wref(1) = 0;
+psir(1) = euler_angles(1);
+xrk(1)=Xr;
+yrk(1)=Yr;
+Xe(1) = Xd - Xr;
+Ye(1) = Yd - Yr;
+error(1) = sqrt(Xe(1)^2 + Ye(1)^2);
+P1=init_plot(Uref(1),Wref(1),error(1),tf);
+M1=init_robot_plot(xrk(1),yrk(1),psir(1),Xd,Yd);
+disp("Position Controller")
+for k = 2:length(t)
+        [Uref(k), Wref(k),error(k),xrk(k), yrk(k),psir(k)] = controller(Xd, Yd, Xr, Yr, euler_angles);
+        M1=update_robot_plot(M1,xrk(k),yrk(k),psir(k));  
+        P1=update_plot(t)
+        % Update error and control actions plot
+%         set(errorPlot, 'XData', t(1:k), 'YData', error(1:k));
+%         set(UrefPlot, 'XData', t(1:k), 'YData', Uref(1:k));
+%         set(WrefPlot, 'XData', t(1:k), 'YData', Wref(1:k));
+
+        % Wait for the next execution cycle
+        cmdMsg.Linear.X = Uref(k);
+        cmdMsg.Angular.Z = Wref(k);
+        send(cmdPub, cmdMsg);
+
+        % Wait for the next execution cycle
+        waitfor(rate);
+ end
+disp("DONE")
+
+
+
+% Callback to update received position data
+function odometryCallback(src, msg)
+    global Xr Yr  euler_angles
+    Xr = msg.Pose.Pose.Position.X; % Actual X position
+    Yr = msg.Pose.Pose.Position.Y; % Actual Y position
+    euler_angles = quat2eul([msg.Pose.Pose.Orientation.W, msg.Pose.Pose.Orientation.X, ...
+                             msg.Pose.Pose.Orientation.Y, msg.Pose.Pose.Orientation.Z]); % Output ZYX (Yaw Pitch Roll)
+    
+end
