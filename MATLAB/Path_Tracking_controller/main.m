@@ -5,18 +5,22 @@ close all;
 
 global Xr Yr euler_angles  %Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ
 
-% Desired position
- xrd = 40*sin(0.004*t);                           %Posición x
- yrd = 40*sin(0.002*t);                               %Posición y 
- xrdp= 40*cos(0.004*t)*0.4;  
- yrdp= 40*cos(0.002*t)*0.2;
-
+ 
 % Define execution rate 
-fr = 4;
+fr = 10;
 rate = rosrate(fr);
 ts = 1/fr;
-tf = 65;
+tf = 55;
 t = 0:ts:tf;
+
+var=-30:ts:30;
+
+% Desired position
+ Xd = 2*var;                           
+ Yd = 4+3*Xd;                                
+ Xdp= -0.2*ones(1,length(var));  
+ Ydp= -1*ones(1,length(var));
+ 
 
 % Create publisher to send velocity commands to the robot
 cmdPub = rospublisher('/boat/cmd', 'geometry_msgs/Twist');
@@ -37,23 +41,32 @@ Wref(1) = 0;
 psir(1) = euler_angles(1);
 xrk(1)=Xr;
 yrk(1)=Yr;
-Xe(1) = Xd - Xr;
-Ye(1) = Yd - Yr;
+Xe(1) = Xd(1) - xrk(1);
+Ye(1) = Yd(1) - xrk(1);
 error(1) = sqrt(Xe(1)^2 + Ye(1)^2);
-[errorPlot UrefPlot WrefPlot]=init_plot(Uref(1),Wref(1),error(1),tf);
 M1=init_robot_plot(xrk(1),yrk(1),psir(1),Xd,Yd);
-
+distancias = sqrt((Xd - Xr).^2 + (Yd - Yr).^2);
+% Encuentra el índice del punto más cercano
+[~, indice_min] = min(distancias);
+M2=plot(Xd(indice_min),Yd(indice_min),'bo', 'MarkerSize', 4);
 disp("Position Controller")
+
 for k = 2:length(t)
         
+        distancias = sqrt((Xd - Xr).^2 + (Yd - Yr).^2);
+
+        % Encuentra el índice del punto más cercano
+        [~, indice_min] = min(distancias);
+
+        % Encuentra las coordenadas del punto más cercano
+        punto_minimo = [Xd(indice_min), Yd(indice_min)];
+        
         %Controller
-        [Uref(k), Wref(k),error(k),xrk(k), yrk(k),psir(k)] = controller(Xd, Yd, Xr, Yr, euler_angles);
+        [Uref(k), Wref(k),error(k),xrk(k), yrk(k),psir(k)] = controller(Xd(indice_min), Yd(indice_min), Xdp(k), Ydp(k),Xr, Yr, euler_angles);
         
         %Figure plotting
-        M1=update_robot_plot(M1,xrk(k),yrk(k),psir(k));  
-        [errorPlot UrefPlot WrefPlot]=update_plot(errorPlot,UrefPlot,WrefPlot,error,Uref,Wref,t,k);
-       
-
+        [M1, M2]=update_robot_plot(M1,M2,xrk(k),yrk(k),psir(k),Xd(indice_min), Yd(indice_min));  
+        
         % publish control actions
         cmdMsg.Linear.X = Uref(k);
         cmdMsg.Angular.Z = Wref(k);
@@ -61,10 +74,42 @@ for k = 2:length(t)
 
         % Wait for the next execution cycle
         waitfor(rate);
- end
+end
+ 
+
 disp("DONE")
+cmdMsg.Linear.X = 0;
+cmdMsg.Angular.Z = 0;
+send(cmdPub, cmdMsg);
 
+fig3 = figure('Name','Robot Movement');
+set(fig3,'position',[60 60 980 600]);
+axis square; cameratoolbar
+axis([-50 50 -50 50 0 1]);
+grid on
+plot(Xd,Yd,'r','LineWidth',2);
+hold on
+plot(xrk,yrk,'b','LineWidth',2)
+hold on
 
+figure('Name','Error')
+subplot(311)
+plot(t,error,'linewidth',2), grid on
+legend('Error Evolution')
+xlabel('Time [s]'), ylabel('Error  [m]')
+title("")
+axis([0 tf 0 max(error)+5]); 
+subplot(312)
+title("CONTROL ACTIONS")
+
+plot(t,Uref,'linewidth',2), grid on
+legend('Uref Evolution')
+xlabel('Time [s]'), ylabel('Uref [m/s]')
+
+subplot(313)
+plot(t,Wref,'g','linewidth',2), grid on
+legend('Wref Evolution')
+xlabel('Time [s]'), ylabel('Wref [rad/s]')
 
 % Callback to update received position data
 function odometryCallback(src, msg)
