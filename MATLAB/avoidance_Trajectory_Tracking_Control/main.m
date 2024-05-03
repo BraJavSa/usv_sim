@@ -10,15 +10,14 @@ global Xr Yr euler_angles  %Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ
 fr = 10;
 rate = rosrate(fr);
 ts = 1/fr;
-tf = 100;
+tf = 120;
 t = 0:ts:tf;
 
-
 % Desired position
- Xd = 2*t;                           
- Yd = 4+3*Xd;                                
- Xdp= 1*ones(1,length(t));  
- Ydp= 0.2*ones(1,length(t));
+ Xd = 40*sin(0.04*t);                           
+ Yd = 40*sin(0.02*t);                                
+ Xdp= 40*cos(0.04*t)*0.04;  
+ Ydp= 40*cos(0.02*t)*0.02;
  
 
 % Create publisher to send velocity commands to the robot
@@ -40,31 +39,24 @@ Wref(1) = 0;
 psir(1) = euler_angles(1);
 xrk(1)=Xr;
 yrk(1)=Yr;
+w_obs(1)=0;
+w_obs(2)=0;
+ obx=0;
+ oby=39.9;
 Xe(1) = Xd(1) - xrk(1);
 Ye(1) = Yd(1) - xrk(1);
 error(1) = sqrt(Xe(1)^2 + Ye(1)^2);
 M1=init_robot_plot(xrk(1),yrk(1),psir(1),Xd,Yd);
-distancias = sqrt((Xd - Xr).^2 + (Yd - Yr).^2);
-% Encuentra el índice del punto más cercano
-[~, indice_min] = min(distancias);
-M2=plot(Xd(indice_min),Yd(indice_min),'bo', 'MarkerSize', 4);
-disp("Position Controller")
+M2=plot(Xd(1),Yd(1),'bo', 'MarkerSize', 4);
+disp("Trajectory Trackin Control")
 
-for k = 2:length(t)
-        
-        distancias = sqrt((Xd - Xr).^2 + (Yd - Yr).^2);
-
-        % Encuentra el índice del punto más cercano
-        [~, indice_min] = min(distancias);
-
-        % Encuentra las coordenadas del punto más cercano
-        punto_minimo = [Xd(indice_min), Yd(indice_min)];
+for k = 3:length(t)
         
         %Controller
-        [Uref(k), Wref(k),error(k),xrk(k), yrk(k),psir(k)] = controller(Xd(indice_min), Yd(indice_min), Xdp(k), Ydp(k),Xr, Yr, euler_angles);
+        [Uref(k), Wref(k),error(k),xrk(k), yrk(k),psir(k),w_obs(k)] = controller(Xd(k), Yd(k), Xdp(k), Ydp(k),Xr, Yr, euler_angles,w_obs(k-1),w_obs(k-2),ts,obx,oby);
         
         %Figure plotting
-        [M1, M2]=update_robot_plot(M1,M2,xrk(k),yrk(k),psir(k),Xd(indice_min), Yd(indice_min));  
+        [M1, M2]=update_robot_plot(M1,M2,xrk(k),yrk(k),psir(k),Xd(k), Yd(k),obx,oby);  
         
         % publish control actions
         cmdMsg.Linear.X = Uref(k);

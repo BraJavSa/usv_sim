@@ -10,15 +10,18 @@ global Xr Yr euler_angles  %Zr qX qY qZ qW aLX aLY aLZ aAX aAY aAZ
 fr = 10;
 rate = rosrate(fr);
 ts = 1/fr;
-tf = 50;
+tf = 120;
 t = 0:ts:tf;
 
+var=-30:ts:30;
+
 % Desired position
- Xd = -40*ones(1,length(t));                           
- Yd = -40*ones(1,length(t));                                
- Xdp= 0*t;  
- Ydp= 0*t;
- 
+ Xd = 2*var;                           
+ Yd = 4+3*Xd;                                
+ Xdp= 0.2*ones(1,length(var));  
+ Ydp= 0.1*ones(1,length(var));
+ obx=3;
+ oby=13.1;
 
 % Create publisher to send velocity commands to the robot
 cmdPub = rospublisher('/boat/cmd', 'geometry_msgs/Twist');
@@ -41,18 +44,32 @@ xrk(1)=Xr;
 yrk(1)=Yr;
 Xe(1) = Xd(1) - xrk(1);
 Ye(1) = Yd(1) - xrk(1);
+w_obs(1)=0;
+w_obs(2)=0;
+
 error(1) = sqrt(Xe(1)^2 + Ye(1)^2);
 M1=init_robot_plot(xrk(1),yrk(1),psir(1),Xd,Yd);
-M2=plot(Xd(1),Yd(1),'bo', 'MarkerSize', 4);
+distancias = sqrt((Xd - Xr).^2 + (Yd - Yr).^2);
+% Encuentra el índice del punto más cercano
+[~, indice_min] = min(distancias);
+M2=plot(Xd(indice_min),Yd(indice_min),'bo', 'MarkerSize', 4);
 disp("Position Controller")
 
-for k = 2:length(t)
+for k = 3:length(t)
+        
+        distancias = sqrt((Xd - Xr).^2 + (Yd - Yr).^2);
+
+        % Encuentra el índice del punto más cercano
+        [~, indice_min] = min(distancias);
+
+        % Encuentra las coordenadas del punto más cercano
+        punto_minimo = [Xd(indice_min), Yd(indice_min)];
         
         %Controller
-        [Uref(k), Wref(k),error(k),xrk(k), yrk(k),psir(k)] = controller(Xd(k), Yd(k), Xdp(k), Ydp(k),Xr, Yr, euler_angles);
+         [Uref(k), Wref(k),error(k),xrk(k), yrk(k),psir(k),w_obs(k)] = controller(Xd(indice_min), Yd(indice_min), Xdp(k), Ydp(k),Xr, Yr, euler_angles,w_obs(k-1),w_obs(k-2),ts,obx,oby);
         
         %Figure plotting
-        [M1, M2]=update_robot_plot(M1,M2,xrk(k),yrk(k),psir(k),Xd(k), Yd(k));  
+        [M1, M2]=update_robot_plot(M1,M2,xrk(k),yrk(k),psir(k),Xd(indice_min), Yd(indice_min),obx,oby);  
         
         % publish control actions
         cmdMsg.Linear.X = Uref(k);
@@ -72,12 +89,14 @@ send(cmdPub, cmdMsg);
 fig3 = figure('Name','Robot Movement');
 set(fig3,'position',[60 60 980 600]);
 axis square; cameratoolbar
-axis([-50 50 -50 50 0 1]);
+axis([-0 10 -0 20 0 1]);
 grid on
 plot(Xd,Yd,'r','LineWidth',2);
 hold on
 plot(xrk,yrk,'b','LineWidth',2)
 hold on
+xlim([-10, 10]);
+ylim([0, 20]);
 
 figure('Name','Error')
 subplot(311)
