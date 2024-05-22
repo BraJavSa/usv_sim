@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+        <arg name="robot_description" default="$(find wamv_gazebo)/urdf/wamv_gazebo.urdf.xacro"/>
+   
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find usv_sim)/launch/iaquabot.rviz"/>
+
+
+</launch>
+

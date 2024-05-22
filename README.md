@@ -23,7 +23,7 @@ then close all terminals and open one again
 ## Install MAVROS
   
   ```
-  sudo apt-get install ros-noetic-mavros ros-noetic-mavros-extras`
+  sudo apt-get install ros-noetic-mavros ros-noetic-mavros-extras
   wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh
   sudo bash ./install_geographiclib_datasets.sh 
   
@@ -31,13 +31,18 @@ then close all terminals and open one again
 
 ## Install SIMULATOR
 
+    follow this link for install joy-ros http://wiki.ros.org/joy/Tutorials/ConfiguringALinuxJoystick
+
     ```
     sudo apt-get install ros-noetic-gazebo-ros-pkgs ros-noetic-gazebo-ros-control
     sudo apt-get install ros-noetic-hector-gazebo-plugins
-    http://wiki.ros.org/joy/Tutorials/ConfiguringALinuxJoystick
     sudo apt-get install -y libgazebo11-dev
     mkdir -p ~/catkin_ws/src
     cd ~/catkin_ws/src
+    sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'
+    wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+    sudo apt-get update
+    sudo apt-get install python3-catkin-tools
     catkin_init_workspace
     cd ~/catkin_ws
     catkin_make
@@ -47,7 +52,8 @@ then close all terminals and open one again
     git clone https://github.com/BraJavSa/px4_offboard_control.git
     git clone https://github.com/BraJavSa/usv_sim.git
     git clone https://github.com/ros-simulation/gazebo_ros_pkgs.git
-    git clone -b gazebo_classic https://github.com/BraJavSa/vrx.git 
+    git clone -b gazebo_classic https://github.com/BraJavSa/vrx.git
+    cd ~/catkin_ws
     catkin_make
     ```
 ## run SIMULATOR
