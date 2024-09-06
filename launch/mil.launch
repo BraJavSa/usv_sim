@@ -53,7 +53,7 @@
   </include>
 
   <!-- Load robot model -->
-  <arg name="urdf" default="$(find wamv_gazebo)/urdf/wamv_gazebo.urdf.xacro"/>
+  <arg name="urdf" default="$(find usv_sim)/urdf/wamv_gazebo.urdf.xacro"/>
   <param name="$(arg namespace)/robot_description"
          command="$(find xacro)/xacro &#x002D;&#x002D;inorder '$(arg urdf)'
          thruster_config:=$(arg thrust_config)
@@ -74,5 +74,11 @@
         args="-x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg R) -P $(arg P) -Y $(arg Y)
               --urdf $(arg urdf) --model wamv"/>
+
+  <!-- Nodo de control -->
+  <node pkg="usv_sim" type="control_actions.py" name="control_actions" output="screen"/>
+  <node pkg="usv_sim" type="usv_model.py" name="usv_model" output="screen"/>
+  <node pkg="usv_sim" type="update_position.py" name="update_position" output="screen"/>
 </launch>
+
 
