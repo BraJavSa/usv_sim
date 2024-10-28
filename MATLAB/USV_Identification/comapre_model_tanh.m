@@ -60,7 +60,7 @@ for k = 1:length(t) - 1
     % elseif u(k + 1)<-2
     %     u(k+1)=-2;
     % end
-    %u(k + 1) = saturacion_tanh(u(k + 1));
+    u(k + 1) = saturacion_tanh(u(k + 1));
     v(k + 1) = v(k) + d_vel(2) * ts;
     r(k + 1) = r(k) + d_vel(3) * ts;
 end

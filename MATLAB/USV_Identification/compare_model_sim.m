@@ -1,7 +1,7 @@
 clc, clear all, close all,
 % Cargar los datos de torques y tiempo desde el archivo .mat
-load('sim_val.mat');
-load('delta_valores.mat', 'delta');
+load('muestreo_externo.mat');
+load('delta_valores_2.mat', 'delta');
 
 % Asignar los valores de delta a variables individuales
 delta_1 = delta(1);
@@ -47,18 +47,6 @@ for k = 1:length(t) - 1
     v(k + 1) = v(k) + d_vel(2) * ts;
     r(k + 1) = r(k) + d_vel(3) * ts;
 end
-
-
-figure;
-plot(t, T_u, 'r', 'DisplayName', 'T u');
-hold on;
-plot(t, T_r, 'b', 'DisplayName', 'T r');
-xlabel('Tiempo (s)');
-ylabel('Torques');
-title('Torques de Entrada');
-legend;
-grid on;
-
 
 % Gráfica de los resultados en un subplot
 figure;

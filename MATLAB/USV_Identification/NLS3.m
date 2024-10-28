@@ -82,7 +82,7 @@ end
 
 % Calcula los parámetros usando mínimos cuadrados
 delta = pinv(Y) * vef;
-save('delta_valores3.mat', 'delta');
+save('delta_valores_3.mat', 'delta');
 
 % Imprime los valores de los parámetros identificados con un formato personalizado
 disp('Parámetros identificados (delta):');
