@@ -15,12 +15,12 @@
   <arg name="namespace" default="wamv"/>
 
   <!-- Initial USV location and attitude-->
-  <arg name="x" default="158" />
-  <arg name="y" default="108" />
+  <arg name="x" default="0" />
+  <arg name="y" default="0" />
   <arg name="z" default="0.1" />
   <arg name="P" default="0" />
   <arg name="R" default="0" />
-  <arg name="Y" default="-2.76" />
+  <arg name="Y" default="0" />
 
   <!-- If true, show non-competition ROS topics (/gazebo/model_states, /vrx/debug/wind/direction, etc.)-->
   <arg name="non_competition_mode" default="true"/>
@@ -38,9 +38,8 @@
   <arg name="camera_enabled"       default="true" />
   <arg name="gps_enabled"          default="true" />
   <arg name="imu_enabled"          default="true" />
+  <arg name="lidar_enabled"        default="true" />
   <arg name="ground_truth_enabled" default="true" />
-    <arg name="lidar_enabled"        default="true" />
-    <arg name="pinger_enabled"        default="true" />
 
   <!-- Start Gazebo with the world file -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -75,11 +74,28 @@
         args="-x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg R) -P $(arg P) -Y $(arg Y)
               --urdf $(arg urdf) --model wamv"/>
-    <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
+
+    <!--node name="thruster_control" pkg="usv_sim" type="signal_callback.py" output="screen"/>
+    <node name="data_logger" pkg="usv_sim" type="data_save.py" output="screen"/-->
+
+    <!--node name="update_vel" pkg="usv_sim" type="update_vel.py" output="screen"/>
+    <node name="update_pose" pkg="usv_sim" type="update_pose.py" output="screen"/-->
+    <!--node name="twist2thrust" pkg="usv_sim" type="twist2thrust.py" output="screen"/>
+    <node name="SetDesiredPoint" pkg="usv_sim" type="set_desired_point.py" output="screen"/-->
+      <param name="robot_description" command="xacro $(find iacquabot_mil)/urdf/wamv.xacro"/>
+
+  <!-- Spawnear el robot en Gazebo -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" output="screen" 
+        args="-x $(arg x) -y $(arg y) -z $(arg z)
+              -R $(arg R) -P $(arg P) -Y $(arg Y)
+              -param robot_description -urdf -model wamv2"/>
+ 
+      <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
     <node name="update_vel" pkg="usv_sim" type="update_vel_joy.py" output="screen"/>
     <node name="joy_control" pkg="usv_sim" type="joy_control.py" output="screen"/>
     <node name="world2body" pkg="usv_sim" type="world2body.py" output="screen"/>
     <node name="twist2thrust" pkg="usv_sim" type="twist2thrust.py" output="screen"/>
-    
+     <node pkg="iacquabot_mil" type="ros2sim.py" name="usv_controller" output="screen"/>
+
 </launch>
 

@@ -8,7 +8,7 @@ from geometry_msgs.msg import Twist
 class JoyListener:
     def __init__(self):
         rospy.init_node('joy_listener', anonymous=True)
-        rospy.Subscriber('/joy1', Joy, self.joy_callback)
+        rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.pub = rospy.Publisher('command_boat/cmd', Twist, queue_size=10)
         self.twist_msg = Twist()
         self.linear_vel_x = 0.0
@@ -17,7 +17,7 @@ class JoyListener:
     
     def joy_callback(self, msg):
         linear_vel_x = msg.axes[1]*2
-        self.angular_vel= msg.axes[2]*0.7
+        self.angular_vel= msg.axes[3]*0.7
         self.twist_msg.linear.x = linear_vel_x
         self.twist_msg.angular.z = self.angular_vel
         self.pub.publish(self.twist_msg)

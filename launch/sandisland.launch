@@ -74,12 +74,15 @@
         args="-x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg R) -P $(arg P) -Y $(arg Y)
               --urdf $(arg urdf) --model wamv"/>
-    <node name="world2body" pkg="usv_sim" type="world2body.py" output="screen"/>
-    <node name="update_vel" pkg="usv_sim" type="update_vel.py" output="screen"/>
-    <node name="update_pose" pkg="usv_sim" type="update_pose.py" output="screen"/>
-    <node name="twist2thrust" pkg="usv_sim" type="twist2thrust.py" output="screen"/>
-    <node name="SetDesiredPoint" pkg="usv_sim" type="set_desired_point.py" output="screen"/>
 
+    <node name="world2body" pkg="usv_sim" type="world2body.py" output="screen"/>
+    <!--node name="thruster_control" pkg="usv_sim" type="signal_callback.py" output="screen"/>
+    <node name="data_logger" pkg="usv_sim" type="data_save.py" output="screen"/-->
+
+    <!--node name="update_vel" pkg="usv_sim" type="update_vel.py" output="screen"/>
+    <node name="update_pose" pkg="usv_sim" type="update_pose.py" output="screen"/-->
+    <!--node name="twist2thrust" pkg="usv_sim" type="twist2thrust.py" output="screen"/>
+    <node name="SetDesiredPoint" pkg="usv_sim" type="set_desired_point.py" output="screen"/-->
 
 </launch>
 

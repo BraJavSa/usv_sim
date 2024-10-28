@@ -31,7 +31,7 @@ class UpdateNode:
 def main():
     manual_mode = UpdateNode()
     manual_mode.send_initial_velocity()
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(100)
 
     while not rospy.is_shutdown():
         manual_mode.process()
