@@ -1,7 +1,7 @@
 clc, clear all, close all,
 % Cargar los datos de torques y tiempo desde el archivo .mat
 load('muestreo_externo.mat');
-load('delta_valores4.mat', 'delta');
+load('delta_valores_4_1.mat', 'delta');
 
 % Asignar los valores de delta a variables individuales
 delta_1 = delta(1);
@@ -15,6 +15,12 @@ delta_8 = delta(8);
 delta_9 = delta(9);
 delta_10 = delta(10);
 delta_11 = delta(11);
+landa = 100000;%lambda
+F1=tf(landa,[1 landa ]);
+
+u_f=lsim(F1,vel_u,t)';
+v_f=lsim(F1,vel_v,t)';
+r_f=lsim(F1,vel_r,t)';
 
 % Definición de matrices del sistema
 M = [delta_1, 0, 0;
@@ -33,6 +39,8 @@ r = zeros(length(t),1);
 T_v = zeros(length(t),1);
 IM=inv(M);
 % Simulación
+
+
 for k = 1:length(t) - 1
     % Estado de velocidades actuales
     vel = [u(k); v(k); r(k)];
@@ -52,6 +60,7 @@ for k = 1:length(t) - 1
     % elseif u(k + 1)<-2
     %     u(k+1)=-2;
     % end
+    %u(k + 1) = saturacion_tanh(u(k + 1));
     v(k + 1) = v(k) + d_vel(2) * ts;
     r(k + 1) = r(k) + d_vel(3) * ts;
 end
@@ -113,12 +122,13 @@ sgtitle('Resultados de Velocidades') % Título general para todos los subplots
 error_u=calcularECM(u,vel_u);
 error_v=calcularECM(v,vel_v);
 error_r=calcularECM(r,vel_r);
+promedio=(error_u+error_v+error_r)/3;
 
 % Imprime los resultados en la consola
 fprintf('Error cuadrático medio de u: %.4f\n', error_u);
 fprintf('Error cuadrático medio de v: %.4f\n', error_v);
 fprintf('Error cuadrático medio de r: %.4f\n', error_r);
-
+fprintf('Error cuadrático medio: %.4f\n', promedio);
 function ecm = calcularECM(vector1, vector2)
     % Comprueba que los vectores tengan el mismo tamaño
     if length(vector1) ~= length(vector2)
@@ -130,8 +140,9 @@ function ecm = calcularECM(vector1, vector2)
 end
 
 function salida = saturacion_tanh(valor)
-    valor=valor*1000;
-    limite = 2000;
-    salida = limite * tanh(valor / limite);
-    salida= salida/1000;
+    % valor=valor*10000;
+    limite = 2;
+    factor_suavidad = 7.4;
+    salida = limite*factor_suavidad * tanh(valor / (limite*factor_suavidad));
+    % salida= salida/10000;
 end

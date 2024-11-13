@@ -6,30 +6,7 @@ clear tf;
 
 
 %% LOAD VALUES FROM MATRICES
-load('usv_data2.mat')
-vel_u=odom_lin_vel_x;
-vel_v=odom_lin_vel_y;
-vel_r=odom_ang_vel_z;
-T__right_thruster = zeros(size(left_thruster));
-T__left_thruster = zeros(size(left_thruster));
-% Recorre el vector cmd y aplica la función calcularFuerzaPropulsor
-for i = 1:length(T__right_thruster)
-    T__right_thruster(i) = calcularFuerzaPropulsor(right_thruster(i))*2; 
-    T__left_thruster(i) = calcularFuerzaPropulsor(left_thruster(i))*2;  
-end
-ts=0.02;
-duracion=length(left_thruster)*ts;
-t=0:ts:duracion-ts;
-% Define la distancia entre los propulsores
-d = 1.4/2; 
-
-% Calcula la fuerza de traslación
-T_u = T__left_thruster + T__right_thruster;
-
-% Calcula la fuerza de rotación
-T_r = d * (-T__left_thruster + T__right_thruster);
-T_v = 0 * T__left_thruster ;
-
+load('ident_usv.mat')
 
 
 
@@ -105,7 +82,7 @@ end
 
 % Calcula los parámetros usando mínimos cuadrados
 delta = pinv(Y) * vef;
-save('delta_valores_4_2.mat', 'delta');
+save('delta_valores_4.mat', 'delta');
 
 % Imprime los valores de los parámetros identificados con un formato personalizado
 disp('Parámetros identificados (delta):');

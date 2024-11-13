@@ -1,7 +1,7 @@
 clc, clear all, close all,
 % Cargar los datos de torques y tiempo desde el archivo .mat
 load('muestreo_externo.mat');
-load('delta_valores_4.mat', 'delta');
+load('delta_valores4_1.mat', 'delta');
 
 % Asignar los valores de delta a variables individuales
 delta_1 = delta(1);
