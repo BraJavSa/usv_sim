@@ -4,7 +4,10 @@ from scipy.io import loadmat
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
+import torch.onnx
+
+
+
 class USVDataset(torch.utils.data.Dataset):
     def __init__(self, t, vel_u, vel_v, vel_r, T_u, T_r):
         self.t = torch.tensor(t, dtype=torch.float32)
@@ -42,37 +45,34 @@ def create_dataset(data):
     T_r = data['T_r'].flatten()
 
     dataset = USVDataset(t, vel_u, vel_v, vel_r, T_u, T_r)
-    return dataset
+    return dataset, t, vel_u, vel_v, vel_r, T_u, T_r
 
 # Load data
-data = loadmat('ident_usv.mat')
-data_val = loadmat('muestreo_externo.mat')
+data = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/Sindy_Identification/ident_usv_2.mat')
+data_val = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/Sindy_Identification/muestreo_externo.mat')
 
-
-
-train_dataset = create_dataset(data)
-val_dataset = create_dataset(data_val)
-
+train_dataset, t, vel_u, vel_v, vel_r, T_u, T_r = create_dataset(data)
+val_dataset, t_val, vel_u_val, vel_v_val, vel_r_val, T_u_val, T_r_val = create_dataset(data_val)
 
 # Hyperparameters
 input_size = 6  # Input features: t, vel_u, vel_v, vel_r, T_u, T_r
-hidden_size = 20
+hidden_size = 5
 output_size = 3  # Output features: d(vel_u)/dt, d(vel_v)/dt, d(vel_r)/dt
 learning_rate = 0.01
-num_epochs = 100
+num_epochs = 10
 
 # Create the model, loss function, and optimizer
 model = USVRNN(input_size, hidden_size, output_size)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-# Create the dataset and data loader
-dataset = USVDataset(t, vel_u, vel_v, vel_r, T_u, T_r)
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+# Create the data loader
+train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 # Training loop
 for epoch in range(num_epochs):
-    for i, (t, vel_u, vel_v, vel_r, T_u, T_r) in enumerate(dataloader):
+    for i, (t, vel_u, vel_v, vel_r, T_u, T_r) in enumerate(train_dataloader):
         # Prepare input and target tensors
         input_tensor = torch.stack([t, vel_u, vel_v, vel_r, T_u, T_r], dim=1).unsqueeze(0)
         target_tensor = torch.stack([torch.diff(vel_u), torch.diff(vel_v), torch.diff(vel_r)], dim=1)
@@ -90,15 +90,18 @@ for epoch in range(num_epochs):
 
     print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}')
 
-# After training,
-
 # Evaluar el modelo
 model.eval()
 
-# Crear listas para almacenar los resultados
-vel_u_pred_all = []
-vel_v_pred_all = []
-vel_r_pred_all = []
+
+# Inicializar arrays vacíos para las predicciones y valores reales
+vel_u_pred_all = np.array([])
+vel_v_pred_all = np.array([])
+vel_r_pred_all = np.array([])
+t_val_all = np.array([])
+vel_u_val_all = np.array([])
+vel_v_val_all = np.array([])
+vel_r_val_all = np.array([])
 
 with torch.no_grad():
     for t_val, vel_u_val, vel_v_val, vel_r_val, T_u_val, T_r_val in val_dataloader:
@@ -113,36 +116,35 @@ with torch.no_grad():
         vel_v_pred = vel_v_val + output_val[:, 1]
         vel_r_pred = vel_r_val + output_val[:, 2]
 
-        # Almacenar las predicciones
-        vel_u_pred_all.extend(vel_u_pred.numpy().flatten())
-        vel_v_pred_all.extend(vel_v_pred.numpy().flatten())
-        vel_r_pred_all.extend(vel_r_pred.numpy().flatten())
-
-# Convertir las listas de predicciones a arreglos de NumPy
-vel_u_pred_all = np.array(vel_u_pred_all)
-vel_v_pred_all = np.array(vel_v_pred_all)
-vel_r_pred_all = np.array(vel_r_pred_all)
+        # Almacenar las predicciones y valores reales usando np.append
+        vel_u_pred_all = np.append(vel_u_pred_all, vel_u_pred.numpy().flatten())
+        vel_v_pred_all = np.append(vel_v_pred_all, vel_v_pred.numpy().flatten())
+        vel_r_pred_all = np.append(vel_r_pred_all, vel_r_pred.numpy().flatten())
+        t_val_all = np.append(t_val_all, t_val.numpy().flatten())
+        vel_u_val_all = np.append(vel_u_val_all, vel_u_val.numpy().flatten())
+        vel_v_val_all = np.append(vel_v_val_all, vel_v_val.numpy().flatten())
+        vel_r_val_all = np.append(vel_r_val_all, vel_r_val.numpy().flatten())
 
 # Graficar los resultados
 plt.figure(figsize=(12, 8))
 
 plt.subplot(3, 1, 1)
-plt.plot(t_val_np, vel_u_val_np, label='Velocidad de Surgencia Real')
-plt.plot(t_val_np, vel_u_pred_all, label='Velocidad de Surgencia Predicha')
+plt.plot(t_val_all, vel_u_val_all, label='Velocidad de Surgencia Real')
+plt.plot(t_val_all, vel_u_pred_all, label='Velocidad de Surgencia Predicha')
 plt.xlabel('Tiempo (s)')
 plt.ylabel('Velocidad de Surgencia (m/s)')
 plt.legend()
 
 plt.subplot(3, 1, 2)
-plt.plot(t_val_np, vel_v_val_np, label='Velocidad de Balanceo Real')
-plt.plot(t_val_np, vel_v_pred_all, label='Velocidad de Balanceo Predicha')
+plt.plot(t_val_all, vel_v_val_all, label='Velocidad de Balanceo Real')
+plt.plot(t_val_all, vel_v_pred_all, label='Velocidad de Balanceo Predicha')
 plt.xlabel('Tiempo (s)')
 plt.ylabel('Velocidad de Balanceo (m/s)')
 plt.legend()
 
 plt.subplot(3, 1, 3)
-plt.plot(t_val_np, vel_r_val_np, label='Velocidad de Guiñada Real')
-plt.plot(t_val_np, vel_r_pred_all, label='Velocidad de Guiñada Predicha')
+plt.plot(t_val_all, vel_r_val_all, label='Velocidad de Guiñada Real')
+plt.plot(t_val_all, vel_r_pred_all, label='Velocidad de Guiñada Predicha')
 plt.xlabel('Tiempo (s)')
 plt.ylabel('Velocidad de Guiñada (rad/s)')
 plt.legend()
