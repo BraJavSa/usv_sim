@@ -27,6 +27,7 @@ class USVDataset(torch.utils.data.Dataset):
                 self.pass2_vel_u[idx], self.pass2_vel_v[idx], self.pass2_vel_r[idx],
                 self.vel_u[idx], self.vel_v[idx], self.vel_r[idx])
 
+# Create the RNN model
 class USVRNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(USVRNN, self).__init__()
@@ -38,7 +39,7 @@ class USVRNN(nn.Module):
         x = self.fc(x[:, -1, :])
         return x
 
-# Define the create_dataset function
+# Extract features and create datasets
 def create_dataset(data):
     T_u = data['T_u'].flatten()
     T_r = data['T_r'].flatten()
@@ -56,21 +57,57 @@ def create_dataset(data):
     return dataset, T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r
 
 # Load data
+data = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/ident_usv_2.mat')
 data_val = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/muestreo_externo_2.mat')
+
+train_dataset, T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r = create_dataset(data)
 val_dataset, T_u_val, T_r_val, pass_vel_u_val, pass_vel_v_val, pass_vel_r_val, pass2_vel_u_val, pass2_vel_v_val, pass2_vel_r_val, vel_u_val, vel_v_val, vel_r_val = create_dataset(data_val)
+
+# Hyperparameters
+input_size = 8  # Input features: T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r
+hidden_size = 25
+output_size = 3  # Output features: vel_u, vel_v, vel_r
+learning_rate = 0.000001
+num_epochs = 4000
+
+# Create the model, loss function, and optimizer
+model = USVRNN(input_size, hidden_size, output_size)
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+# Create the data loader
+train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-# Define model parameters
-input_size = 8  # Input features: T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r
-hidden_size = 200
-output_size = 3  # Output features: vel_u, vel_v, vel_r
+# Training loop
+for epoch in range(num_epochs):
+    for i, (T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r) in enumerate(train_dataloader):
+        # Prepare input and target tensors
+        input_tensor = torch.stack([T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r], dim=1).unsqueeze(1)
+        target_tensor = torch.stack([vel_u, vel_v, vel_r], dim=1)
 
-# Load the model
-model = USVRNN(input_size, hidden_size, output_size)
-model_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/usv_rnn_model_2.pth'
-model.load_state_dict(torch.load(model_path))
+        # Forward pass
+        output = model(input_tensor)
+
+        # Calculate loss
+        loss = criterion(output, target_tensor)
+
+        # Backward pass and optimization
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}')
+    # Check if loss is below threshold 
+    if loss.item() <= 0.00007: 
+        break
+# Save the model to the specified path
+model_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/usv_rnn_model.pth'
+torch.save(model.state_dict(), model_path)
+print(f"Modelo guardado en '{model_path}'")
+
+# Evaluate the model
 model.eval()
-print("Modelo cargado y listo para validación")
 
 # Initialize empty arrays for predictions and real values
 vel_u_pred_all = []
@@ -87,6 +124,8 @@ pass2_vel_r_val_all = []
 vel_u_val_all = []
 vel_v_val_all = []
 vel_r_val_all = []
+
+
 
 with torch.no_grad():
     for (T_u_val, T_r_val, pass_vel_u_val, pass_vel_v_val, pass_vel_r_val, pass2_vel_u_val, pass2_vel_v_val, pass2_vel_r_val,
@@ -133,6 +172,7 @@ pass2_vel_r_val_all = np.array(pass2_vel_r_val_all)
 vel_u_val_all = np.array(vel_u_val_all)
 vel_v_val_all = np.array(vel_v_val_all)
 vel_r_val_all = np.array(vel_r_val_all)
+
 
 # Plot the results for velocities
 plt.figure(figsize=(12, 8))

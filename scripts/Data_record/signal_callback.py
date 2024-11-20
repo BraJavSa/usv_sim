@@ -13,8 +13,7 @@ class ThrusterControl:
         self.right_thruster_pub = rospy.Publisher('/wamv/thrusters/right_thrust_cmd', Float32, queue_size=10)
         self.right1_thruster_pub = rospy.Publisher('/wamv/thrusters/right1_thrust_cmd', Float32, queue_size=10)
 
-        # Frecuencia de publicación (100 Hz)
-        self.publish_rate = rospy.Rate(100)  # 100 Hz
+        self.publish_rate = rospy.Rate(200)  
 
         # Almacena las señales generales recibidas (inicialmente cero)
         self.left_signal = 0

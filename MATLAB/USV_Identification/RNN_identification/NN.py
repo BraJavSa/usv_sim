@@ -1,3 +1,4 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
@@ -27,18 +28,22 @@ class USVDataset(torch.utils.data.Dataset):
                 self.pass2_vel_u[idx], self.pass2_vel_v[idx], self.pass2_vel_r[idx],
                 self.vel_u[idx], self.vel_v[idx], self.vel_r[idx])
 
-class USVRNN(nn.Module):
+# Crear el modelo de red neuronal
+class USVNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
-        super(USVRNN, self).__init__()
-        self.rnn = nn.RNN(input_size, hidden_size, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
+        super(USVNN, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, int(hidden_size/2))
+        self.fc3 = nn.Linear(int(hidden_size/2), output_size)
+        self.relu = nn.ReLU()
 
     def forward(self, x):
-        x, _ = self.rnn(x)
-        x = self.fc(x[:, -1, :])
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
 
-# Define the create_dataset function
+# Cargar y preparar datos
 def create_dataset(data):
     T_u = data['T_u'].flatten()
     T_r = data['T_r'].flatten()
@@ -55,35 +60,63 @@ def create_dataset(data):
     dataset = USVDataset(T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r)
     return dataset, T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r
 
-# Load data
+# Cargar datos
+data = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/ident_usv_2.mat')
 data_val = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/muestreo_externo_2.mat')
+
+train_dataset, T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r = create_dataset(data)
 val_dataset, T_u_val, T_r_val, pass_vel_u_val, pass_vel_v_val, pass_vel_r_val, pass2_vel_u_val, pass2_vel_v_val, pass2_vel_r_val, vel_u_val, vel_v_val, vel_r_val = create_dataset(data_val)
+
+# Hiperparámetros
+input_size = 8
+hidden_size = 200
+output_size = 3
+learning_rate = 0.001
+num_epochs = 40
+
+# Crear el modelo, función de pérdida y optimizador
+model = USVNN(input_size, hidden_size, output_size)
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+# Crear el data loader
+train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-# Define model parameters
-input_size = 8  # Input features: T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r
-hidden_size = 200
-output_size = 3  # Output features: vel_u, vel_v, vel_r
+# Bucle de entrenamiento
+for epoch in range(num_epochs):
+    for i, (T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r) in enumerate(train_dataloader):
+        # Preparar tensores de entrada y objetivo
+        input_tensor = torch.stack([T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r], dim=1)
+        target_tensor = torch.stack([vel_u, vel_v, vel_r], dim=1)
 
-# Load the model
-model = USVRNN(input_size, hidden_size, output_size)
-model_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/usv_rnn_model_2.pth'
-model.load_state_dict(torch.load(model_path))
+        # Forward pass
+        output = model(input_tensor)
+
+        # Calcular pérdida
+        loss = criterion(output, target_tensor)
+
+        # Backward pass y optimización
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}')
+    if loss.item() <= 0.00007:
+        break
+
+# Guardar el modelo
+model_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/usv_nn_model.pth'
+torch.save(model.state_dict(), model_path)
+print(f"Modelo guardado en '{model_path}'")
+
+# Evaluar el modelo
 model.eval()
-print("Modelo cargado y listo para validación")
 
-# Initialize empty arrays for predictions and real values
+# Inicializar listas vacías para predicciones y valores reales
 vel_u_pred_all = []
 vel_v_pred_all = []
 vel_r_pred_all = []
-T_u_val_all = []
-T_r_val_all = []
-pass_vel_u_val_all = []
-pass_vel_v_val_all = []
-pass_vel_r_val_all = []
-pass2_vel_u_val_all = []
-pass2_vel_v_val_all = []
-pass2_vel_r_val_all = []
 vel_u_val_all = []
 vel_v_val_all = []
 vel_r_val_all = []
@@ -91,50 +124,34 @@ vel_r_val_all = []
 with torch.no_grad():
     for (T_u_val, T_r_val, pass_vel_u_val, pass_vel_v_val, pass_vel_r_val, pass2_vel_u_val, pass2_vel_v_val, pass2_vel_r_val,
          vel_u_val, vel_v_val, vel_r_val) in val_dataloader:
-        # Prepare input tensor
-        input_tensor_val = torch.stack([T_u_val, T_r_val, pass_vel_u_val, pass_vel_v_val, pass_vel_r_val, pass2_vel_u_val, pass2_vel_v_val, pass2_vel_r_val], dim=1).unsqueeze(1)
+        # Preparar tensor de entrada
+        input_tensor_val = torch.stack([T_u_val, T_r_val, pass_vel_u_val, pass_vel_v_val, pass_vel_r_val, pass2_vel_u_val, pass2_vel_v_val, pass2_vel_r_val], dim=1)
 
-        # Perform prediction
+        # Realizar predicción
         output_val = model(input_tensor_val)
 
-        # Extract predicted velocities
+        # Extraer predicciones de velocidades
         vel_u_pred = output_val[:, 0].numpy().flatten()
         vel_v_pred = output_val[:, 1].numpy().flatten()
         vel_r_pred = output_val[:, 2].numpy().flatten()
 
-        # Store predictions and real values
+        # Almacenar predicciones y valores reales
         vel_u_pred_all.extend(vel_u_pred)
         vel_v_pred_all.extend(vel_v_pred)
         vel_r_pred_all.extend(vel_r_pred)
-        T_u_val_all.extend(T_u_val.numpy().flatten())
-        T_r_val_all.extend(T_r_val.numpy().flatten())
-        pass_vel_u_val_all.extend(pass_vel_u_val.numpy().flatten())
-        pass_vel_v_val_all.extend(pass_vel_v_val.numpy().flatten())
-        pass_vel_r_val_all.extend(pass_vel_r_val.numpy().flatten())
-        pass2_vel_u_val_all.extend(pass2_vel_u_val.numpy().flatten())
-        pass2_vel_v_val_all.extend(pass2_vel_v_val.numpy().flatten())
-        pass2_vel_r_val_all.extend(pass2_vel_r_val.numpy().flatten())
         vel_u_val_all.extend(vel_u_val.numpy().flatten())
         vel_v_val_all.extend(vel_v_val.numpy().flatten())
         vel_r_val_all.extend(vel_r_val.numpy().flatten())
 
-# Convert lists to numpy arrays
+# Convertir listas a arrays numpy
 vel_u_pred_all = np.array(vel_u_pred_all)
 vel_v_pred_all = np.array(vel_v_pred_all)
 vel_r_pred_all = np.array(vel_r_pred_all)
-T_u_val_all = np.array(T_u_val_all)
-T_r_val_all = np.array(T_r_val_all)
-pass_vel_u_val_all = np.array(pass_vel_u_val_all)
-pass_vel_v_val_all = np.array(pass_vel_v_val_all)
-pass_vel_r_val_all = np.array(pass_vel_r_val_all)
-pass2_vel_u_val_all = np.array(pass2_vel_u_val_all)
-pass2_vel_v_val_all = np.array(pass2_vel_v_val_all)
-pass2_vel_r_val_all = np.array(pass2_vel_r_val_all)
 vel_u_val_all = np.array(vel_u_val_all)
 vel_v_val_all = np.array(vel_v_val_all)
 vel_r_val_all = np.array(vel_r_val_all)
 
-# Plot the results for velocities
+# Graficar los resultados
 plt.figure(figsize=(12, 8))
 
 plt.subplot(3, 1, 1)

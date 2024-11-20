@@ -56,7 +56,7 @@ class DataLogger:
         self.stop_logging = msg.data
         if self.stop_logging:
             rospy.loginfo("Deteniendo la recolección de datos...")
-            filepath = os.path.expanduser('~/Documents/usv_data.mat')
+            filepath = os.path.expanduser('~/catkin_ws/src/usv_sim/MATLAB/data/usv_data.mat')
             # Guardar el diccionario de datos en formato .mat
             sio.savemat(filepath, self.data)
             rospy.loginfo(f'Datos guardados exitosamente en {filepath}')

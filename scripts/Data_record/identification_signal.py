@@ -14,9 +14,8 @@ class ExcitationSignals:
         self.signals_pub = rospy.Publisher('/wamv/signals', Float32MultiArray, queue_size=10)
         self.stop_pub=rospy.Publisher("/stop_logging", Bool,  queue_size=10)  # Control de detención
 
-        # Duración total de cada función (1 minuto por función, 20 funciones en total)
-        self.duration_per_function = 10  # 60 segundos
-        self.total_duration = 20 * self.duration_per_function  # 20 minutos
+        self.duration_per_function = 10  
+        self.total_duration = 20 * self.duration_per_function  
 
         # Frecuencia de publicación (cada 200 ms, o 5 Hz)
         self.publish_rate = rospy.Rate(10)  # 5 Hz

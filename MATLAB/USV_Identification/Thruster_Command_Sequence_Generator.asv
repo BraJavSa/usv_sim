@@ -8,7 +8,7 @@ normalize_signal = @(signal) 2 * (signal - min(signal)) / (max(signal) - min(sig
 
 % Número total de muestras
 total_samples = t_total * fs;
-funtions = 19;
+funtions = 18;
 % Inicialización de las señales
 propulsor1 = cell(1, funtions); % Almacenará funciones para el primer propulsor
 propulsor2 = cell(1, funtions); % Almacenará funciones para el segundo propulsor
@@ -74,10 +74,9 @@ propulsor2{16} = normalize_signal(sin(t)) * 0.9;
 
 propulsor1{17} = normalize_signal(0.8 * cos(t)) * 0.5; 
 propulsor2{17} = normalize_signal(0.8 * cos(t)) * 0.5;
-propulsor1{18} = ones(1, length(t)); 
-propulsor2{18} = ones(1, length(t)); 
-propulsor1{19} = -ones(1, length(t)); 
-propulsor2{19} = -ones(1, length(t)); 
+propulsor1{18} = normalize_signal(1*t+1); 
+propulsor2{18} = normalize_signal(1*t+1); 
+
 % Inicialización de vectores acumulativos para ambos propulsores
 cmd_r = []; % Vector para almacenar todos los valores del propulsor 1
 cmd_l = []; % Vector para almacenar todos los valores del propulsor 2

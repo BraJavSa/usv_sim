@@ -15,7 +15,7 @@ delta_8 = delta(8);
 delta_9 = delta(9);
 delta_10 = delta(10);
 delta_11 = delta(11);
-landa = 100000;%lambda
+landa = 1000;%lambda
 F1=tf(landa,[1 landa ]);
 
 u_f=lsim(F1,vel_u,t)';

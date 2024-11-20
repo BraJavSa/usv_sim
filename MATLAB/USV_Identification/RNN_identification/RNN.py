@@ -57,7 +57,7 @@ def create_dataset(data):
     return dataset, T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r
 
 # Load data
-data = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/ident_usv_2.mat')
+data = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/ident_usv_3.mat')
 data_val = loadmat('/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/muestreo_externo_2.mat')
 
 train_dataset, T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, pass2_vel_u, pass2_vel_v, pass2_vel_r, vel_u, vel_v, vel_r = create_dataset(data)
@@ -68,7 +68,7 @@ input_size = 8  # Input features: T_u, T_r, pass_vel_u, pass_vel_v, pass_vel_r, 
 hidden_size = 200
 output_size = 3  # Output features: vel_u, vel_v, vel_r
 learning_rate = 0.0001
-num_epochs = 40
+num_epochs = 400
 
 # Create the model, loss function, and optimizer
 model = USVRNN(input_size, hidden_size, output_size)
@@ -99,10 +99,10 @@ for epoch in range(num_epochs):
 
     print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}')
     # Check if loss is below threshold 
-    if loss.item() <= 0.00007: 
+    if loss.item() <= 0.00005: 
         break
 # Save the model to the specified path
-model_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/usv_rnn_model.pth'
+model_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/usv_rnn_model_2.pth'
 torch.save(model.state_dict(), model_path)
 print(f"Modelo guardado en '{model_path}'")
 

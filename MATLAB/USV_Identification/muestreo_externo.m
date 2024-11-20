@@ -69,7 +69,7 @@ T_v=T_u*0;
     vel_v=nu(:, 2);
     vel_r=nu(:, 3);
 
-    save('muestreo_externo.mat', 'T_u', 'T_r','T_v', 't', 'vel_u', 'vel_v', 'vel_r','ts');
+    save('muestreo_externo_3.mat', 'T_u', 'T_r','T_v', 't', 'vel_u', 'vel_v', 'vel_r','ts');
     disp("Muestreo terminado")
     function odomCallback(~, msg)
         global velocities_measured;  % Declarar la variable global
