@@ -3,7 +3,7 @@ from scipy.io import loadmat
 import numpy as np
 
 # Ruta del archivo .mat
-file_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/muestreo_externo_2.mat'
+file_path = '/home/javipc/catkin_ws/src/usv_sim/MATLAB/USV_Identification/RNN_identification/ident_usv_3.mat'
 
 # Cargar datos del archivo
 data = loadmat(file_path)
@@ -21,23 +21,23 @@ plt.figure(figsize=(10, 8))
 
 # Gráfico de T_u (Thrust Force)
 plt.subplot(2, 1, 1)  # 2 filas, 1 columna, posición 1
-plt.plot(time, T_u)
+plt.plot(time, T_u, label='T_u')
 plt.xlabel('Time [s]')
 plt.ylabel('Thrust Force [N]')
 plt.title('Thrust Force vs Time')
 plt.xlim(0, len(T_u) * ts)  # Limitar el eje x a 0-90 segundos
 plt.grid(True)
-plt.legend()
+plt.legend(fontsize=14)  # Aumentar tamaño de fuente de la leyenda
 
 # Gráfico de T_r (Yaw Moment)
 plt.subplot(2, 1, 2)  # 2 filas, 1 columna, posición 2
-plt.plot(time, T_r, color='tab:orange')
+plt.plot(time, T_r, color='tab:orange', label='T_r')
 plt.xlabel('Time [s]')
 plt.ylabel('Yaw Moment [Nm]')
 plt.title('Yaw Moment vs Time')
 plt.xlim(0, len(T_u) * ts)  # Limitar el eje x a 0-90 segundos
 plt.grid(True)
-plt.legend()
+plt.legend(fontsize=14)  # Aumentar tamaño de fuente de la leyenda
 
 # Ajustar diseño
 plt.tight_layout()

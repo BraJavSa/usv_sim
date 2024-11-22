@@ -72,7 +72,7 @@ input_size = 8
 hidden_size = 200
 output_size = 3
 learning_rate = 0.001
-num_epochs = 40
+num_epochs = 80
 
 # Crear el modelo, función de pérdida y optimizador
 model = USVNN(input_size, hidden_size, output_size)
@@ -102,7 +102,7 @@ for epoch in range(num_epochs):
         optimizer.step()
 
     print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}')
-    if loss.item() <= 0.00007:
+    if loss.item() <= 0.00025:
         break
 
 # Guardar el modelo
